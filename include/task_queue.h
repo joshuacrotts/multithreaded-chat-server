@@ -12,18 +12,18 @@ enum TASK_TYPE { TASK_NULL };
  *
  */
 typedef struct task_queue_t {
-  pthread_mutex_t      mutex; /* */
-  pthread_cond_t       cond;  /* */
-  struct queue_node_s *head;  /* */
-  struct queue_node_s *tail;  /* */
+  pthread_mutex_t           mutex; /* */
+  pthread_cond_t            cond;  /* */
+  struct task_queue_node_s *head;  /* */
+  struct task_queue_node_s *tail;  /* */
 } task_queue_t;
 
 /**
  *
  */
-struct queue_node_s {
-  struct task_s *      task; /* */
-  struct queue_node_s *next; /* */
+struct task_queue_node_s {
+  struct task_s *           task; /* */
+  struct task_queue_node_s *next; /* */
 };
 
 /**
@@ -33,7 +33,7 @@ struct task_s {
   enum TASK_TYPE   task_type; /* */
   struct client_s *sender;    /* */
 
-  const char *receiver;       /* */
+  char *receiver; /* */
 };
 
 extern void           task_queue_create( task_queue_t *queue );

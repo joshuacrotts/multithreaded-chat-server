@@ -34,6 +34,10 @@ server_init( void ) {
   server.flags = SERVER_ACTIVE;
   client_list_create( server.client_list );
   task_queue_create( server.task_queue );
+
+  // Set up the threadpool here...
+  // Set up the signal handler here...
+
   server_listen();
   client_list_destroy( server.client_list );
   task_queue_destroy( server.task_queue );
