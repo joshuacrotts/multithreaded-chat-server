@@ -2,7 +2,7 @@ CC = gcc
 EXES = main
 OBJS = main.o server.o client.o client_list.o task_queue.o utils.o
 CFLAGS = -g -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -Wall -Werror -Iinclude 
-LDFLAGS = -pthread -lm -lcurses
+LDFLAGS = -pthread -lm
 
 all: $(EXES) 
 
