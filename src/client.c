@@ -6,7 +6,7 @@
 #include "client.h"
 #include "server.h"
 
-static void *client_listen( void * );
+//static void *client_listen( void * );
 
 extern server_t server;
 
@@ -28,7 +28,7 @@ client_create( const char *ip, int comm_id ) {
   client->name    = ( char * ) ip;
   client->comm_id = comm_id;
   client->flags   = CLIENT_CONNECTED;
-  pthread_create( &client->pid, NULL, client_listen, ( void * ) client );
+  //pthread_create( &client->pid, NULL, client_listen, ( void * ) client );
 
   return client;
 }
@@ -70,9 +70,9 @@ client_destroy( struct client_s *client ) {
  *
  * @return
  */
-static void *
+/*static void *
 client_listen( void *c ) {
   struct client_s *client = ( struct client_s * ) c;
   pthread_detach( client->pid );
   return NULL;
-}
+}*/

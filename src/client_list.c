@@ -16,7 +16,11 @@ client_list_create( client_list_t *client_list ) {
     exit( EXIT_FAILURE );
   }
 
-  pthread_mutex_init( &client_list->mutex, NULL );
+  if ( pthread_mutex_init( &client_list->mutex, NULL ) < 0) {
+    fprintf( stderr, "Could not initialize the mutex for client list.\n" );
+    exit(EXIT_FAILURE);
+  }
+  printf("HERE!!!!!!");
   client_list->head = NULL;
   client_list->tail = NULL;
 }

@@ -56,6 +56,7 @@ static void
 linked_list_test() {
   client_list_t linked_list;
   client_list_create( &linked_list );
+  printf("%p\n", &linked_list.mutex);
 
   while ( true ) {
     char buff[1024];
@@ -70,8 +71,6 @@ linked_list_test() {
         }
         printf( "\n" );
       }
-
-      free( buff );
     }
   }
 }
