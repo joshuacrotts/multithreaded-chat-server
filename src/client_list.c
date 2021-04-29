@@ -10,17 +10,10 @@
  */
 void
 client_list_create( client_list_t *client_list ) {
-  client_list = malloc( sizeof( client_list_t ) );
-  if ( client_list == NULL ) {
-    fprintf( stderr, "Could not allocate memory for client list.\n" );
+  if ( pthread_mutex_init( &client_list->mutex, NULL ) < 0 ) {
+    fprintf( stderr, "Could not initialize the mutex for client list.\n" );
     exit( EXIT_FAILURE );
   }
-
-  if ( pthread_mutex_init( &client_list->mutex, NULL ) < 0) {
-    fprintf( stderr, "Could not initialize the mutex for client list.\n" );
-    exit(EXIT_FAILURE);
-  }
-  printf("HERE!!!!!!");
   client_list->head = NULL;
   client_list->tail = NULL;
 }
@@ -44,6 +37,8 @@ client_list_add( client_list_t *client_list, struct client_s *client ) {
   client_node->client = client;
   client_node->next   = NULL;
   client_node->prev   = NULL;
+
+  // Add the client to the list.
   if ( client_list->head == NULL ) {
     client_list->tail = client_list->head = client_node;
   } else {
