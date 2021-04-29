@@ -17,7 +17,7 @@ extern server_t server;
  *
  * @return
  */
-void
+struct client_s *
 client_create( const char *ip, int comm_id ) {
   struct client_s *client = malloc( sizeof( struct client_s ) );
   if ( client == NULL ) {
@@ -28,9 +28,9 @@ client_create( const char *ip, int comm_id ) {
   client->name    = ( char * ) ip;
   client->comm_id = comm_id;
   client->flags   = CLIENT_CONNECTED;
-
-  client_list_add( server.client_list, client );
   pthread_create( &client->pid, NULL, client_listen, ( void * ) client );
+
+  return client;
 }
 
 /**

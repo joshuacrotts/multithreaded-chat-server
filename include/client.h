@@ -22,7 +22,7 @@ struct client_s {
   WINDOW *  output_window;  /* */
 };
 
-extern void client_create( const char *ip, int comm_id );
+extern struct client_s *client_create( const char *ip, int comm_id );
 extern void client_destroy( struct client_s *client );
 
 #endif // CLIENT_H
