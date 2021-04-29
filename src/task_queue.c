@@ -72,9 +72,9 @@ task_queue_front( task_queue_t *queue ) {
 void
 task_queue_destroy( task_queue_t *queue ) {
   pthread_mutex_lock( &queue->mutex );
-  struct task_queue_node_s *curr;
-  struct task_queue_node_s *next;
-  for ( curr = queue->head; curr != NULL; curr = curr->next ) {
+  struct task_queue_node_s *curr = queue->head;
+  struct task_queue_node_s *next = curr;
+  while ( next != NULL ) {
     next = curr->next;
     // We really only need to free the task itself and the receiver
     // because we malloc the string.
