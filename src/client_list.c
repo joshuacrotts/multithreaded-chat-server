@@ -118,9 +118,9 @@ client_list_search( client_list_t *client_list, struct client_s *client ) {
 void
 client_list_destroy( client_list_t *client_list ) {
   pthread_mutex_lock( &client_list->mutex );
-  struct client_node_s *curr;
-  struct client_node_s *next;
-  for ( curr = client_list->head; curr != NULL; curr = curr->next ) {
+  struct client_node_s *curr = client_list->head;
+  struct client_node_s *next = curr;
+  while ( next != NULL ) {
     next = curr->next;
     client_destroy( curr->client );
     free( curr );
