@@ -58,12 +58,12 @@ linked_list_test() {
   client_list_create( &linked_list );
 
   while ( true ) {
-    char * buff;
-    size_t in = 0;
-    while ( getline( &buff, &in, stdin ) != -1 ) {
-      if ( streq( buff, "add", in ) ) {
+    char buff[1024];
+    while ( fgets(buff, sizeof buff, stdin ) != NULL ) {
+      buff[strlen(buff) - 1] = '\0';
+      if ( streq( buff, "add", sizeof buff ) ) {
         client_list_add( &linked_list, client_create( "Test str", rand() ) );
-      } else if ( streq( buff, "print", in ) ) {
+      } else if ( streq( buff, "print", sizeof buff ) ) {
         struct client_node_s *cns = NULL;
         for ( cns = linked_list.head; cns != NULL; cns = cns->next ) {
           printf( "%s, %d\t", cns->client->name, cns->client->comm_id );
