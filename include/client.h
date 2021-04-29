@@ -14,13 +14,20 @@ struct client_s {
   char *name;               /* */
   int   comm_id;            /* */
   int   flags;              /* */
+  int   row;                /* */
+  int   col;                /* */
 
   FILE *    read_fp;        /* */
   FILE *    write_fp;       /* */
   pthread_t pid;            /* */
-  WINDOW *  input_window;   /* */
-  WINDOW *  output_window;  /* */
-  SCREEN *  screen;         /* */
+};
+
+/**
+ * 
+ */
+struct cursor_s {
+  int last_x;
+  int last_y;
 };
 
 extern void client_create( const char *ip, int comm_id );
