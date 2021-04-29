@@ -32,15 +32,14 @@ server_init( void ) {
   printf( "SERVER: Chat server starting...\n" );
 
   server.flags = SERVER_ACTIVE;
-  client_list_create( server.client_list );
-  task_queue_create( server.task_queue );
+  client_list_create( &server.client_list );
+  task_queue_create( &server.task_queue );
 
   // Set up the threadpool here...
   // Set up the signal handler here...
-
   server_listen();
-  client_list_destroy( server.client_list );
-  task_queue_destroy( server.task_queue );
+  client_list_destroy( &server.client_list );
+  task_queue_destroy( &server.task_queue );
 }
 
 /**
@@ -116,5 +115,6 @@ server_listen( void ) {
                               &client_addr_len ) ) >= 0 ) {
     char *user = inet_ntoa( ( ( struct sockaddr_in * ) &client_addr )->sin_addr );
     printf( "SERVER: Got connection from %s\n", user );
+    client_create( user, comm_fd );
   }
 }

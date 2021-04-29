@@ -52,6 +52,9 @@ print_usage( void ) {
                    "-q\tTest queue structure\n" );
 }
 
+/**
+ * 
+ */
 static void
 linked_list_test() {
   client_list_t linked_list;
@@ -63,7 +66,6 @@ linked_list_test() {
     while ( fgets(buff, sizeof buff, stdin ) != NULL ) {
       buff[strlen(buff) - 1] = '\0';
       if ( streq( buff, "add", sizeof buff ) ) {
-        client_list_add( &linked_list, client_create( "Test str", rand() ) );
       } else if ( streq( buff, "print", sizeof buff ) ) {
         struct client_node_s *cns = NULL;
         for ( cns = linked_list.head; cns != NULL; cns = cns->next ) {

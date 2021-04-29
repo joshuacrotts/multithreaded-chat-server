@@ -20,9 +20,10 @@ struct client_s {
   pthread_t pid;            /* */
   WINDOW *  input_window;   /* */
   WINDOW *  output_window;  /* */
+  SCREEN *  screen;         /* */
 };
 
-extern struct client_s *client_create( const char *ip, int comm_id );
+extern void client_create( const char *ip, int comm_id );
 extern void client_destroy( struct client_s *client );
 
 #endif // CLIENT_H

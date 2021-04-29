@@ -34,6 +34,7 @@ struct task_s {
   struct client_s *sender;    /* */
 
   char *receiver; /* */
+  char *data;     /* */
 };
 
 extern void           task_queue_create( task_queue_t *queue );

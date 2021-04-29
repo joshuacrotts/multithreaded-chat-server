@@ -28,4 +28,4 @@ utils.o: src/utils.c
 		$(CC) -c $(CFLAGS) $< -o $@
 
 clean: 
-		rm -rf $(OBJS) $(EXES)
+		rm -rf $(OBJS) $(EXES) *.dSYM
