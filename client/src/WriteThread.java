@@ -57,7 +57,6 @@ public class WriteThread implements Runnable {
 
             this.writefp.write(line + "\n");
             this.writefp.flush();
-            this.inputField.setReady(false);
         }
     }
     
