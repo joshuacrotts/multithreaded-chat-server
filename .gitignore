@@ -53,3 +53,5 @@ dkms.conf
 .classpath
 .project
 out/
+bin/
+.idea/
