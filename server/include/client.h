@@ -27,17 +27,18 @@ struct cursor_s {
  *
  */
 struct client_s {
-  char *name;                               /* */
-  int   comm_id;                            /* */
-  int   flags;                              /* */
-  int   row;                                /* */
-  int   col;                                /* */
+  char *name;                                   /* */
+  int   comm_id;                                /* */
+  int   flags;                                  /* */
+  int   row;                                    /* */
+  int   col;                                    /* */
 
-  FILE *    read_fp;                        /* */
-  FILE *    write_fp;                       /* */
-  pthread_t pid;                            /* */
+  FILE *    read_fp;                            /* */
+  FILE *    write_fp;                           /* */
+  pthread_t pid;                                /* */
 
-  struct text_attribute_s text_attributes;  /* */
+  struct text_attribute_s   text_attributes;    /* */
+  struct client_s           *friends;           /* */
 };
 
 extern void client_create( const char *ip, int comm_id );
