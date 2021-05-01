@@ -56,3 +56,4 @@ out/
 bin/
 .idea/
 /client/src/META-INF/
+client/src/META-INF/*

@@ -1,59 +1,61 @@
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.Socket;
 
-import javax.swing.JTextArea;
-
+/**
+ *
+ */
 public class ReadThread implements Runnable {
 
     /**
-     * 
+     *
      */
-    private Thread thread;
-    
+    private final Client CLIENT;
+
     /**
-     * 
+     *
+     */
+    private final Thread THREAD;
+
+    /**
+     *
+     */
+    private final ClientMessageField MESSAGE_FIELD;
+
+    /**
+     *
      */
     private BufferedReader readfp;
-    
-    /**
-     * 
-     */
-    private Socket s;
 
-    /**
-     * 
-     */
-    private ClientMessageField messageField;
-
-    public ReadThread(Socket s, ClientMessageField messageField) {
-        this.s = s;
-        this.messageField = messageField;
+    public ReadThread(Client client, ClientMessageField messageField) {
+        this.CLIENT = client;
+        this.MESSAGE_FIELD = messageField;
         try {
             this.readfp = new BufferedReader(
-                    new InputStreamReader(s.getInputStream()));
+                    new InputStreamReader(this.CLIENT.getSocket().getInputStream()));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.thread = new Thread(this);
-        this.thread.start();
+        this.THREAD = new Thread(this);
+        this.THREAD.start();
     }
 
     @Override
     public void run() {
-        while (!this.s.isClosed()) {
+        while (!this.CLIENT.getSocket().isClosed()) {
             String line = "";
             try {
-                // Block while there's no data. Implicit block
-                // by BufferedReader.
+                // Block while there's no data. Implicit block by BufferedReader.
                 while ((line = this.readfp.readLine()) != null) {
-                    this.messageField.appendString(line + "\n");
+                    this.MESSAGE_FIELD.appendString(line + "\n", null);
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }
+    }
+
+    public ClientMessageField getMessageField() {
+        return this.MESSAGE_FIELD;
     }
 }

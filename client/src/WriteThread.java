@@ -1,75 +1,75 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.Socket;
 
-import javax.swing.JTextField;
-
+/**
+ *
+ */
 public class WriteThread implements Runnable {
 
     /**
-     * 
+     *
      */
-    private Thread thread;
+    private final Client CLIENT;
 
     /**
-     * 
+     *
      */
-    private Socket s;
+    private final Thread THREAD;
 
     /**
-     * 
+     *
+     */
+    private final ClientInputField INPUT_FIELD;
+
+    /**
+     *
      */
     private PrintWriter writefp;
 
-    /**
-     * 
-     */
-    private ClientInputField inputField;
+    public WriteThread(Client client, ClientInputField inputField) {
+        this.CLIENT = client;
+        this.INPUT_FIELD = inputField;
 
-    public WriteThread(Socket s, ClientInputField inputField) {
-        this.s = s;
-        this.inputField = inputField;
-        
         // Create the stdin and writer file pointers.
         // The write fp corresponds to the read on the server.
         try {
-            this.writefp = new PrintWriter(s.getOutputStream(), true);
+            this.writefp = new PrintWriter(this.CLIENT.getSocket().getOutputStream(), true);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
 
-        this.thread = new Thread(this);
-        this.thread.start();
+        this.THREAD = new Thread(this);
+        this.THREAD.start();
     }
 
     @Override
     public void run() {
-        while (!this.s.isClosed()) {
+        while (!this.CLIENT.getSocket().isClosed()) {
             String line = "";
             // Block until we receive some input.
             try {
-                line = (String) this.inputField.getBlockingQueue().take();
+                line = (String) this.INPUT_FIELD.getBlockingQueue().take();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            this.writefp.write(line + "\n");
-            this.writefp.flush();
+            // Parse the input to see if we are going to use a local command or not.
+            if ((line = this.CLIENT.parseCommand(line)) != null) {
+                this.writefp.write(line + "\n");
+                this.writefp.flush();
+            }
         }
     }
-    
+
     /**
-     * 
+     *
      */
     public void close() {
         this.writefp.write("leave\nleave\n");
         this.writefp.flush();
         try {
-            this.s.close();
+            this.CLIENT.getSocket().close();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

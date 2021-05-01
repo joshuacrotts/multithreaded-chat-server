@@ -1,19 +1,20 @@
-import java.awt.Dimension;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-
+/**
+ *
+ */
 public class ClientFrame extends JFrame {
 
     /**
-     * 
+     *
      */
     private final ClientPanel CLIENT_PANEL;
 
     /**
-     * 
+     *
      */
     private final Client CLIENT;
 
@@ -31,7 +32,7 @@ public class ClientFrame extends JFrame {
     }
 
     /**
-     * 
+     *
      */
     public void addWindowCloseListener() {
         super.addWindowListener(new WindowAdapter() {

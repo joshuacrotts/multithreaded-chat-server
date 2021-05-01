@@ -1,32 +1,34 @@
-import java.awt.BorderLayout;
+import javax.swing.*;
+import java.awt.*;
 
-import javax.swing.JPanel;
-
+/**
+ *
+ */
 public class ClientPanel extends JPanel {
 
     /**
-     * 
+     *
      */
-    private ClientInputField inputField;
-    
+    private final ClientInputField INPUT_FIELD;
+
     /**
-     * 
+     *
      */
-    private ClientMessageField messageField;
-    
+    private final ClientMessageField MESSAGE_FIELD;
+
     public ClientPanel() {
-        this.inputField = new ClientInputField();
-        this.messageField = new ClientMessageField();
+        this.INPUT_FIELD = new ClientInputField();
+        this.MESSAGE_FIELD = new ClientMessageField();
         super.setLayout(new BorderLayout());
-        super.add(this.inputField, BorderLayout.SOUTH);
-        super.add(this.messageField.getScrollPane(), BorderLayout.CENTER);
+        super.add(this.INPUT_FIELD, BorderLayout.SOUTH);
+        super.add(this.MESSAGE_FIELD.getScrollPane(), BorderLayout.CENTER);
     }
-    
+
     public ClientInputField getInputField() {
-        return this.inputField;
+        return this.INPUT_FIELD;
     }
-    
+
     public ClientMessageField getMessageField() {
-        return this.messageField;
+        return this.MESSAGE_FIELD;
     }
 }
