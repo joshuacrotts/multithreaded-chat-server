@@ -93,7 +93,8 @@ client_listen( void *c ) {
   while ( client->flags & CLIENT_CONNECTED ) {
     char buff[1024];
     if( fgets( buff, sizeof buff, client->read_fp ) != NULL ) {
-      buff[strlen( buff ) - 1] ='\0';
+      buff[strcspn( buff, "\n" )] = 0;
+      printf("%s\n", buff);
       client_parse_command( client, buff );
     }
   }
@@ -110,17 +111,17 @@ client_parse_command( struct client_s *client, char *cmd ) {
   // Tokenize the command.
   char *rest    = cmd;
   char *command = strtok_r( rest, " ", &rest );
-  size_t len    = strlen( rest );
+  size_t len    = strlen( command );
 
   // If there isn't a command or the client is NULL, just quit early.
-  if (command == NULL || client == NULL ) {
+  if ( command == NULL || client == NULL ) {
     return;
   }
 
   // Now parse each individual command.
-  if ( streq( rest, "leave", len ) ) {
+  if ( streq( command, "leave", len ) ) {
     client_parse_leave( client, rest );
-  } else if ( streq( rest, "login", len ) ) {
+  } else if ( streq( command, "login", len ) ) {
     client_parse_login( client, rest );
   }
 }
