@@ -23,13 +23,12 @@ extern server_t server;
  */
 void
 client_create( const char *ip, int comm_id ) {
-  struct client_s *client = malloc( sizeof( struct client_s ) );
+  struct client_s *client = calloc( 1, sizeof( struct client_s ) );
   if ( client == NULL ) {
     fprintf( stderr, "Could not allocate memory for client.\n" );
     exit( EXIT_FAILURE );
   }
 
-  memset( client, 0, sizeof ( struct client_s ) );
   client->name    = ( char * ) ip;
   client->comm_id = comm_id;
   client->flags   = CLIENT_CONNECTED;

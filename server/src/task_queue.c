@@ -33,10 +33,8 @@ task_queue_create( task_queue_t *q ) {
  */
 void
 task_queue_enqueue( task_queue_t *q, struct task_s *task ) {
-  pthread_mutex_lock( &q->mutex );
-
   // Initialize the node for the list and store the task in it.
-  struct task_queue_node_s *node = malloc( sizeof( struct task_queue_node_s ) );
+  struct task_queue_node_s *node = calloc( 1, sizeof( struct task_queue_node_s ) );
   if ( node == NULL ) {
     printf( "SERVER: Could not allocate memory for node in task queue.\n" );
     exit( EXIT_FAILURE );
@@ -45,6 +43,7 @@ task_queue_enqueue( task_queue_t *q, struct task_s *task ) {
   node->task = task;
   node->next = NULL;
 
+  pthread_mutex_lock( &q->mutex );
   if ( q->head == NULL ) {
     q->head = node;
   } else {
