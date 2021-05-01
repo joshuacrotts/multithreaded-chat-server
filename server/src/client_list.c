@@ -77,8 +77,7 @@ client_list_remove( client_list_t *client_list, struct client_s *client ) {
         curr->prev->next = curr->next;
         curr->next->prev = curr->prev;
       }
-      client_destroy( curr->client );
-      free( curr );
+      client->flags &= ~CLIENT_CONNECTED;
       pthread_mutex_unlock( &client_list->mutex );
       return i;
     }

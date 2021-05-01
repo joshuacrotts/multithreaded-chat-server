@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "client.h"
@@ -19,6 +20,7 @@ extern server_t server;
 void
 client_create( const char *ip, int comm_id ) {
   struct client_s *client = malloc( sizeof( struct client_s ) );
+  memset( client, 0, sizeof ( struct client_s ) );
   if ( client == NULL ) {
     fprintf( stderr, "Could not allocate memory for client.\n" );
     exit( EXIT_FAILURE );
@@ -86,5 +88,6 @@ client_listen( void *c ) {
   while ( client->flags & CLIENT_CONNECTED ) {
   }
 
+  client_destroy( client );
   return NULL;
 }
