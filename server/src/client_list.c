@@ -68,15 +68,22 @@ client_list_remove( client_list_t *client_list, struct client_s *client ) {
       if ( curr->prev == NULL ) {
         // If the node is the head then it won't have a prev ptr.
         client_list->head = client_list->head->next;
+        // If we just removed the last element in the list then
+        // we can't reassign prev.
+        if ( client_list->head != NULL ) {
+          client_list->head->prev = NULL;
+        }
       } else if ( curr->next == NULL ) {
         // If the node is the tail, then the next ptr is null.
         client_list->tail = client_list->tail->prev;
+        client_list->tail->next = NULL;
       } else {
         // Otherwise, set the previous's next link to curr's next, and
         // set the next's prev to curr.prev.
         curr->prev->next = curr->next;
         curr->next->prev = curr->prev;
       }
+
       client->flags &= ~CLIENT_CONNECTED;
       pthread_mutex_unlock( &client_list->mutex );
       return i;
@@ -120,10 +127,11 @@ client_list_destroy( client_list_t *client_list ) {
   struct client_node_s *next = curr;
   while ( next != NULL ) {
     next = curr->next;
+    // Destroy the client associated with this node.
     client_destroy( curr->client );
+    // Free the client_node_s itself.
     free( curr );
   }
 
   pthread_mutex_unlock( &client_list->mutex );
-  free( client_list );
 }

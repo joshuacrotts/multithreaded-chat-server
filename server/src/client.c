@@ -5,6 +5,7 @@
 
 #include "client.h"
 #include "server.h"
+#include "utils.h"
 
 static void *client_listen( void * );
 
@@ -20,12 +21,12 @@ extern server_t server;
 void
 client_create( const char *ip, int comm_id ) {
   struct client_s *client = malloc( sizeof( struct client_s ) );
-  memset( client, 0, sizeof ( struct client_s ) );
   if ( client == NULL ) {
     fprintf( stderr, "Could not allocate memory for client.\n" );
     exit( EXIT_FAILURE );
   }
 
+  memset( client, 0, sizeof ( struct client_s ) );
   client->name    = ( char * ) ip;
   client->comm_id = comm_id;
   client->flags   = CLIENT_CONNECTED;
@@ -71,7 +72,7 @@ client_destroy( struct client_s *client ) {
   if ( fclose( client->write_fp ) < 0 ) {
     fprintf( stderr, "Could not close client write file pointer.\n" );
   }
-  
+
   free( client );
 }
 
@@ -86,8 +87,16 @@ client_listen( void *c ) {
   struct client_s *client = ( struct client_s * ) c;
   pthread_detach( client->pid );
   while ( client->flags & CLIENT_CONNECTED ) {
+    char buff[1024];
+    if( fgets(buff, sizeof buff, client->read_fp ) != NULL ) {
+      buff[strlen( buff ) - 1] ='\0';
+      // This is just for testing...
+      if ( streq( buff, "leave", sizeof buff ) ) {
+        client->flags &= ~CLIENT_CONNECTED;
+      }
+    }
   }
 
-  client_destroy( client );
+  printf( "Removed index %d\n", client_list_remove( &server.client_list, client ) );
   return NULL;
 }
