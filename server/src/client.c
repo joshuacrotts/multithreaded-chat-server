@@ -73,6 +73,7 @@ client_destroy( struct client_s *client ) {
     fprintf( stderr, "Could not close client write file pointer.\n" );
   }
 
+  printf("Freeing..\n");
   free( client );
 }
 

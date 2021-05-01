@@ -84,7 +84,9 @@ client_list_remove( client_list_t *client_list, struct client_s *client ) {
         curr->next->prev = curr->prev;
       }
 
-      client->flags &= ~CLIENT_CONNECTED;
+      // Destroy the client AND the backing LL node.
+      client_destroy( curr->client );
+      free( curr );
       pthread_mutex_unlock( &client_list->mutex );
       return i;
     }
