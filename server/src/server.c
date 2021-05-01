@@ -15,8 +15,10 @@
 
 #define DEBUG 1
 
-static int server_create_listener( char *service );
 static void server_listen( void );
+static void server_close( int );
+static int server_create_listener( char *service );
+static void server_close_handle_init( void );
 
 /**
  *
@@ -36,10 +38,8 @@ server_init( void ) {
   task_queue_create( &server.task_queue );
 
   // Set up the threadpool here...
-  // Set up the signal handler here...
+  server_close_handle_init();
   server_listen();
-  client_list_destroy( &server.client_list );
-  task_queue_destroy( &server.task_queue );
 }
 
 /**
@@ -117,4 +117,57 @@ server_listen( void ) {
     printf( "SERVER: Got connection from %s\n", user );
     client_create( user, comm_fd );
   }
+}
+
+/**
+ * Shuts the server down when an interrupt or quit signal is received.
+ *
+ * <p>
+ * The server does not free resources unless it is shut down properly - meaning that if
+ * an interrupt is received, the lists aren't freed. While this isn't strictly necessary
+ * since the application releases all memory either way at the end, I still wanted to
+ * have this here to properly close the socket.
+ * </p>
+ *
+ * @param void.
+ *
+ * @return void.
+ */
+static void
+server_close_handle_init( void ) {
+  struct sigaction sa;
+  sa.sa_handler = server_close;
+  sa.sa_flags   = 0;
+  sigemptyset( &sa.sa_mask );
+  sigaction( SIGINT, &sa, NULL );
+  sigaction( SIGQUIT, &sa, NULL );
+}
+
+/**
+ * Closes the socket file descriptor.
+ *
+ * <p>
+ * When a sigint or sigquit is received, this function is called to close the file
+ * descriptor and shut down the thread pool.
+ * </p>
+ *
+ * @param signal - signal received.
+ *
+ * @return void.
+ */
+static void
+server_close( int signal ) {
+  if ( close( server.socket_fd ) < 0 ) {
+    exit( EXIT_FAILURE );
+  }
+
+  // Shuts the thread pool down by broadcasting a signal which causes the
+  // threads to leave the loop since the server flag is turned off.
+  server.flags &= ~SERVER_ACTIVE;
+
+  // Free the clients that are still in the list. Note that if the server
+  // is ended with an interrupt and there are still users in the list, it leaks.
+  // This also doesn't free the thread pool.
+  client_list_destroy( &server.client_list );
+  task_queue_destroy( &server.task_queue );
 }
