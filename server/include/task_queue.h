@@ -33,8 +33,8 @@ struct task_s {
   enum TASK_TYPE   task_type; /* */
   struct client_s *sender;    /* */
 
-  char *receiver; /* */
-  char *data;     /* */
+  char receiver[1024]; /* */
+  char data[1024];     /* */
 };
 
 extern void           task_queue_create( task_queue_t *queue );

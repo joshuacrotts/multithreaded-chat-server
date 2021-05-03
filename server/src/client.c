@@ -39,6 +39,7 @@ client_create( const char *ip, int comm_id ) {
   client->name    = ( char * ) ip;
   client->comm_id = comm_id;
   client->flags   = CLIENT_CONNECTED;
+  client->text_attributes.color = 0x000000ff;
 
   // Open the file pointers from the socket conn.
   // We need to verify that the ptrs are valid before continuing. If not, free.
