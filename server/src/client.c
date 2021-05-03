@@ -92,6 +92,8 @@ client_listen( void *c ) {
   pthread_detach( client->pid );
   while ( client->flags & CLIENT_CONNECTED ) {
     char buff[1024];
+    memset(buff, 0, sizeof buff);
+    fflush( client->write_fp );
     if ( fgets( buff, sizeof buff, client->read_fp ) != NULL ) {
       buff[strcspn( buff, "\n" )] = 0;
       client_parse_command( client, buff );
