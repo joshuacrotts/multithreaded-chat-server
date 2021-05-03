@@ -1,6 +1,9 @@
+import javax.swing.text.Style;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
 
 /**
  *
@@ -47,7 +50,8 @@ public class ReadThread implements Runnable {
             try {
                 // Block while there's no data. Implicit block by BufferedReader.
                 while ((line = this.readfp.readLine()) != null) {
-                    this.MESSAGE_FIELD.appendString(line + "\n", null);
+                    System.out.println("Line: " + line);
+                    this.MESSAGE_FIELD.appendString(line);
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();

@@ -6,6 +6,7 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
+import java.util.Arrays;
 
 /**
  *
@@ -32,17 +33,11 @@ public class ClientMessageField {
     /**
      * @param s
      */
-    public void appendString(String s, Object attributes) {
+    public void appendString(String s) {
         try {
             StyledDocument doc = this.MESSAGE_FIELD.getStyledDocument();
-            Style style = this.MESSAGE_FIELD.addStyle("", null);
-            // Just for some silly testing.
-            int r = (int) (Math.random() * 256);
-            int g = (int) (Math.random() * 256);
-            int b = (int) (Math.random() * 256);
-            StyleConstants.setItalic(style, true);
-            StyleConstants.setForeground(style, new Color(r, g, b));
-            doc.insertString(doc.getLength(), s, style);
+            ClientTextAttributes attributes = new ClientTextAttributes(s, this.MESSAGE_FIELD);
+            doc.insertString(doc.getLength(), s, attributes.getStyle());
         } catch (BadLocationException exc) {
             exc.printStackTrace();
         }
@@ -81,5 +76,57 @@ public class ClientMessageField {
 
     public JEditorPane getMessageField() {
         return this.MESSAGE_FIELD;
+    }
+
+    /**
+     *
+     */
+    private class ClientTextAttributes {
+
+        /**
+         *
+         */
+        private static final int ITALIC_FLAG = 1;
+
+        /**
+         *
+         */
+        private static final int BOLD_FLAG = 2;
+
+        /**
+         *
+         */
+        private final Style STYLE;
+
+        public ClientTextAttributes(String rawString, JTextPane messageField) {
+            String[] data = rawString.split("\\d,\\d\n\n.*");
+            System.out.println(Arrays.toString(data));
+            this.STYLE = messageField.addStyle("", null);
+            int textFlag = 0;
+            int colorFlag = 0;
+
+            // If we have more than one arg, then we know there's a color and style element set.
+            if (data.length > 1) {
+                textFlag = Integer.parseInt(data[0]);
+                colorFlag = Integer.parseInt(data[1]);
+
+                if ((textFlag & ITALIC_FLAG) != 0) {
+                    StyleConstants.setItalic(this.STYLE, true);
+                }
+                if ((textFlag & BOLD_FLAG) != 0) {
+                    StyleConstants.setBold(this.STYLE, true);
+                }
+
+                StyleConstants.setForeground(this.STYLE, this.extractColor(colorFlag));
+            }
+        }
+
+        private Color extractColor(int color) {
+            return new Color(color >> 24 & 0xff, color >> 16 & 0xff, color >> 8 & 0xff, color & 0xff);
+        }
+
+        public Style getStyle() {
+            return this.STYLE;
+        }
     }
 }

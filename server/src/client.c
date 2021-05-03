@@ -94,7 +94,6 @@ client_listen( void *c ) {
     char buff[1024];
     if ( fgets( buff, sizeof buff, client->read_fp ) != NULL ) {
       buff[strcspn( buff, "\n" )] = 0;
-      printf( "%s\n", buff );
       client_parse_command( client, buff );
     }
   }
