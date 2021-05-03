@@ -134,8 +134,10 @@ client_send_message( const struct client_s *client, const struct text_attribute_
                      const char *msg ) {
   if ( attr != NULL ) {
     fprintf( client->write_fp, "%d,%d\n\n%s\n", attr->style_flag, attr->color, msg );
+    printf("SERVER: %d,%d\\n\\n%s\\n", attr->style_flag, attr->color, msg );
   } else {
     fprintf( client->write_fp, "\n\n%s\n", msg );
+    printf("SERVER: \\n\\n%s\\n",  msg );
   }
 }
 
