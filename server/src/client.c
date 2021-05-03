@@ -151,6 +151,7 @@ client_parse_login( const struct client_s *client, char *login_command ) {}
  */
 static void
 client_parse_leave( const struct client_s *client, char *leave_command ) {
+  printf("Leave command: %s\n", leave_command);
   if ( !str_isempty( leave_command ) ) {
     struct text_attribute_s t;
     t.style_flag = TEXT_ATTR_ITALIC;
