@@ -157,5 +157,9 @@ client_parse_leave( const struct client_s *client, char *leave_command ) {
     t.style_flag = TEXT_ATTR_ITALIC;
     t.color      = 0xff000000;
     client_send_message( client, &t, "Error usage: <leave>");
+  } else if (client->flags & CLIENT_IN_ROOM) {
+    client->flags &= ~CLIENT_IN_ROOM;
+  } else {
+    client->flags &= ~CLIENT_CONNECTED;
   }
 }
