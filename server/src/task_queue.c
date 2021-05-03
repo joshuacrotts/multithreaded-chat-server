@@ -149,7 +149,7 @@ task_queue_gettask( task_queue_t *q ) {
   }
 
   // If the server is no longer active, just bail out.
-  if ( ( server.flags & SERVER_ACTIVE ) == 0) {
+  if ( ( server.flags & SERVER_ACTIVE ) == 0 ) {
     pthread_mutex_unlock( &q->mutex );
     return NULL;
   }

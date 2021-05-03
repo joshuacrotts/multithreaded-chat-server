@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <pthread.h>
 
+#include "task_queue.h"
+
 #define CLIENT_CONNECTED 0x00000001
 #define CLIENT_LOGGED_IN 0x00000002
 #define CLIENT_IN_ROOM   0x00000004
@@ -46,6 +48,7 @@ struct client_s {
 };
 
 extern void client_create( const char *ip, int comm_id );
+extern void client_process_task( struct task_s *task );
 extern void client_destroy( struct client_s *client );
 
 #endif // CLIENT_H

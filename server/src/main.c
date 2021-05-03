@@ -53,18 +53,18 @@ print_usage( void ) {
 }
 
 /**
- * 
+ *
  */
 static void
 linked_list_test() {
   client_list_t linked_list;
   client_list_create( &linked_list );
-  printf("%p\n", &linked_list.mutex);
+  printf( "%p\n", &linked_list.mutex );
 
   while ( true ) {
     char buff[1024];
-    while ( fgets(buff, sizeof buff, stdin ) != NULL ) {
-      buff[strlen(buff) - 1] = '\0';
+    while ( fgets( buff, sizeof buff, stdin ) != NULL ) {
+      buff[strlen( buff ) - 1] = '\0';
       if ( str_eq( buff, "add", sizeof buff ) ) {
       } else if ( str_eq( buff, "print", sizeof buff ) ) {
         struct client_node_s *cns = NULL;

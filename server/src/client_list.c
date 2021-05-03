@@ -77,7 +77,7 @@ client_list_remove( client_list_t *client_list, struct client_s *client ) {
         }
       } else if ( curr->next == NULL ) {
         // If the node is the tail, then the next ptr is null.
-        client_list->tail = client_list->tail->prev;
+        client_list->tail       = client_list->tail->prev;
         client_list->tail->next = NULL;
       } else {
         // Otherwise, set the previous's next link to curr's next, and

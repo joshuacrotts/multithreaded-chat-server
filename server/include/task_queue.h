@@ -41,6 +41,7 @@ extern void           task_queue_create( task_queue_t *queue );
 extern void           task_queue_destroy( task_queue_t *queue );
 extern void           task_queue_enqueue( task_queue_t *queue, struct task_s *task );
 extern void           task_queue_dequeue( task_queue_t *queue );
+extern struct task_s *task_queue_gettask( task_queue_t *queue );
 extern struct task_s *task_queue_front( task_queue_t *queue );
 
 #endif // TASK_QUEUE_H

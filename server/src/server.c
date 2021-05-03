@@ -10,15 +10,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "task_queue.h"
+#include "client.h"
 #include "server.h"
 #include "tcpdefs.h"
 
 #define DEBUG 1
 
-static void server_listen( void );
-static void server_close( int );
-static int server_create_listener( char *service );
-static void server_close_handle_init( void );
+static void  server_thread_pool_init( void );
+static void  server_close_handle_init( void );
+static void  server_listen( void );
+static void  server_close( int );
+static void *server_thread_exec( void * );
+static int   server_create_listener( char *service );
 
 /**
  *
@@ -36,8 +40,7 @@ server_init( void ) {
   server.flags = SERVER_ACTIVE;
   client_list_create( &server.client_list );
   task_queue_create( &server.task_queue );
-
-  // Set up the threadpool here...
+  server_thread_pool_init();
   server_close_handle_init();
   server_listen();
 }
@@ -99,12 +102,12 @@ server_create_listener( char *service ) {
 }
 
 /**
- * 
+ *
  * @param
- * 
+ *
  * @return
  */
-static void 
+static void
 server_listen( void ) {
   struct sockaddr_storage client_addr;
   socklen_t               client_addr_len = sizeof( client_addr );
@@ -144,6 +147,25 @@ server_close_handle_init( void ) {
 }
 
 /**
+ * Initializes the thread pool.
+ *
+ * <p>
+ * The thread pool is instantiated inside the server struct alongside a mutex
+ * and condition variable.
+ * </p>
+ *
+ * @param void.
+ *
+ * @return void.
+ */
+static void
+server_thread_pool_init( void ) {
+  for ( int i = 0; i < NUM_THREADS; i++ ) {
+    pthread_create( &server.thread_pool[i], NULL, server_thread_exec, NULL );
+  }
+}
+
+/**
  * Closes the socket file descriptor.
  *
  * <p>
@@ -170,4 +192,32 @@ server_close( int signal ) {
   // This also doesn't free the thread pool.
   client_list_destroy( &server.client_list );
   task_queue_destroy( &server.task_queue );
+}
+
+/**
+ * Thread pool loop.
+ *
+ * <p>
+ * While the server is active, a thread will wait until a task becomes available. Once
+ * one is, a signal is sent to the condition variable and the thread wakes up to perform
+ * the task. A NULL check exists because once the server "shuts down", there are no tasks
+ * to perform, and therefore gettask will return NULL. This is in place to allow for
+ * join-ing the threads at the end (not really necessary but still nice to have).
+ * </p>
+ *
+ * @param void * args (should be null).
+ *
+ * @return void *.
+ */
+static void *
+server_thread_exec( void *args ) {
+  while ( server.flags & SERVER_ACTIVE ) {
+    struct task_s *task = task_queue_gettask( &server.task_queue );
+    if ( task != NULL ) {
+      client_process_task( task );
+      free( task );
+    }
+  }
+
+  return NULL;
 }
