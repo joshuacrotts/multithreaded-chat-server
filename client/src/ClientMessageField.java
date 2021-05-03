@@ -7,6 +7,8 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -27,6 +29,7 @@ public class ClientMessageField {
         this.MESSAGE_FIELD = new JTextPane();
         this.SCROLL_PANE = new JScrollPane(this.MESSAGE_FIELD, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        this.MESSAGE_FIELD.setEditable(false);
         this.addTextChangeEvent();
     }
 
@@ -37,7 +40,7 @@ public class ClientMessageField {
         try {
             StyledDocument doc = this.MESSAGE_FIELD.getStyledDocument();
             ClientTextAttributes attributes = new ClientTextAttributes(s, this.MESSAGE_FIELD);
-            doc.insertString(doc.getLength(), s, attributes.getStyle());
+            doc.insertString(doc.getLength(), attributes.MESSAGE + "\n", attributes.STYLE);
         } catch (BadLocationException exc) {
             exc.printStackTrace();
         }
@@ -57,7 +60,7 @@ public class ClientMessageField {
         this.MESSAGE_FIELD.getStyledDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                MESSAGE_FIELD.setCaretPosition(MESSAGE_FIELD.getText().length());
+                MESSAGE_FIELD.setCaretPosition(MESSAGE_FIELD.getStyledDocument().getLength());
             }
 
             @Override
@@ -81,7 +84,7 @@ public class ClientMessageField {
     /**
      *
      */
-    private class ClientTextAttributes {
+    private static class ClientTextAttributes {
 
         /**
          *
@@ -96,19 +99,29 @@ public class ClientMessageField {
         /**
          *
          */
+        private static final Pattern REGEX = Pattern.compile("(?<textFlag>-?\\d+),(?<color>-?\\d+),(?<msg>.*)", Pattern.MULTILINE);
+
+        /**
+         *
+         */
         private final Style STYLE;
 
+        /**
+         *
+         */
+        private final String MESSAGE;
+
         public ClientTextAttributes(String rawString, JTextPane messageField) {
-            String[] data = rawString.split("\\d,\\d\n\n.*");
-            System.out.println(Arrays.toString(data));
+            Matcher data = REGEX.matcher(rawString);
             this.STYLE = messageField.addStyle("", null);
             int textFlag = 0;
             int colorFlag = 0;
 
             // If we have more than one arg, then we know there's a color and style element set.
-            if (data.length > 1) {
-                textFlag = Integer.parseInt(data[0]);
-                colorFlag = Integer.parseInt(data[1]);
+            if (data.find()) {
+                textFlag = Integer.parseInt(data.group("textFlag"));
+                colorFlag = Integer.parseInt(data.group("color"));
+                this.MESSAGE = data.group("msg");
 
                 if ((textFlag & ITALIC_FLAG) != 0) {
                     StyleConstants.setItalic(this.STYLE, true);
@@ -118,15 +131,13 @@ public class ClientMessageField {
                 }
 
                 StyleConstants.setForeground(this.STYLE, this.extractColor(colorFlag));
+            } else {
+                this.MESSAGE = rawString;
             }
         }
 
         private Color extractColor(int color) {
             return new Color(color >> 24 & 0xff, color >> 16 & 0xff, color >> 8 & 0xff, color & 0xff);
-        }
-
-        public Style getStyle() {
-            return this.STYLE;
         }
     }
 }

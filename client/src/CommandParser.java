@@ -17,6 +17,10 @@ public class CommandParser {
      * @return
      */
     public String parseCommand(String command) {
+        if (!command.startsWith("/")) {
+            return command;
+        }
+
         if (command.contains("clear")) {
             parseClearCommand();
             return null;

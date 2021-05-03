@@ -2,6 +2,7 @@ import javax.swing.text.Style;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketException;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
@@ -45,16 +46,19 @@ public class ReadThread implements Runnable {
 
     @Override
     public void run() {
-        while (!this.CLIENT.getSocket().isClosed()) {
+        while (!this.CLIENT.getSocket().isClosed() && this.CLIENT.getSocket().isConnected()) {
             String line = "";
             try {
                 // Block while there's no data. Implicit block by BufferedReader.
-                while ((line = this.readfp.readLine()) != null) {
-                    System.out.println("Line: " + line);
+                while (!this.CLIENT.getSocket().isClosed() && (line = this.readfp.readLine()) != null) {
                     this.MESSAGE_FIELD.appendString(line);
                 }
             } catch (IOException ex) {
-                ex.printStackTrace();
+                if (ex.getMessage().equals("Socket closed")) {
+                    System.out.println("Client disconnected.");
+                } else {
+                    ex.printStackTrace();
+                }
             }
         }
     }
