@@ -1,11 +1,14 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include <curses.h>
+#include <stdio.h>
 #include <pthread.h>
 
 #define CLIENT_CONNECTED 0x00000001
 #define CLIENT_LOGGED_IN 0x00000002
+
+#define TEXT_ATTR_ITALIC 0x00000001
+#define TEXT_ATTR_BOLD   0x00000002
 
 /**
  *

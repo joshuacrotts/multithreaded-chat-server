@@ -8,9 +8,10 @@
 #include "utils.h"
 
 static void *client_listen( void * );
-static void client_parse_command( struct client_s *client, char *command );
-static void client_parse_leave( struct client_s *client, char *leave_command );
-static void client_parse_login( struct client_s *client, char *login_command );
+static void  client_parse_command( const struct client_s *client, char *command );
+static void  client_send_message( const struct client_s *client, const struct text_attribute_s *attr, const char *msg );
+static void  client_parse_leave( const struct client_s *client, char *leave_command );
+static void  client_parse_login( const struct client_s *client, char *login_command );
 
 extern server_t server;
 
@@ -75,7 +76,7 @@ client_destroy( struct client_s *client ) {
     fprintf( stderr, "Could not close client write file pointer.\n" );
   }
 
-  printf("Freeing..\n");
+  printf( "Freeing..\n" );
   free( client );
 }
 
@@ -91,9 +92,9 @@ client_listen( void *c ) {
   pthread_detach( client->pid );
   while ( client->flags & CLIENT_CONNECTED ) {
     char buff[1024];
-    if( fgets( buff, sizeof buff, client->read_fp ) != NULL ) {
+    if ( fgets( buff, sizeof buff, client->read_fp ) != NULL ) {
       buff[strcspn( buff, "\n" )] = 0;
-      printf("%s\n", buff);
+      printf( "%s\n", buff );
       client_parse_command( client, buff );
     }
   }
@@ -106,11 +107,11 @@ client_listen( void *c ) {
  *
  */
 static void
-client_parse_command( struct client_s *client, char *cmd ) {
+client_parse_command( const struct client_s *client, char *cmd ) {
   // Tokenize the command.
-  char *rest    = cmd;
-  char *command = strtok_r( rest, " ", &rest );
-  size_t len    = strlen( command );
+  char * rest    = cmd;
+  char * command = strtok_r( rest, " ", &rest );
+  size_t len     = strlen( command );
 
   // If there isn't a command or the client is NULL, just quit early.
   if ( command == NULL || client == NULL ) {
@@ -118,9 +119,9 @@ client_parse_command( struct client_s *client, char *cmd ) {
   }
 
   // Now parse each individual command.
-  if ( streq( command, "leave", len ) ) {
+  if ( str_eq( command, "leave", len ) ) {
     client_parse_leave( client, rest );
-  } else if ( streq( command, "login", len ) ) {
+  } else if ( str_eq( command, "login", len ) ) {
     client_parse_login( client, rest );
   }
 }
@@ -129,12 +130,30 @@ client_parse_command( struct client_s *client, char *cmd ) {
  *
  */
 static void
-client_parse_login( struct client_s *client, char *login_command ) {
+client_send_message( const struct client_s *client, const struct text_attribute_s *attr,
+                     const char *msg ) {
+  if ( attr != NULL ) {
+    fprintf( client->write_fp, "%d,%d\n\n%s\n", attr->style_flag, attr->color, msg );
+  } else {
+    fprintf( client->write_fp, "\n\n%s\n", msg );
+  }
 }
 
 /**
  *
  */
 static void
-client_parse_leave( struct client_s *client, char *leave_command ) {
+client_parse_login( const struct client_s *client, char *login_command ) {}
+
+/**
+ *
+ */
+static void
+client_parse_leave( const struct client_s *client, char *leave_command ) {
+  if ( !str_isempty( leave_command ) ) {
+    struct text_attribute_s t;
+    t.style_flag = TEXT_ATTR_ITALIC;
+    t.color      = 0xff000000;
+    client_send_message( client, &t, "Error usage: <leave>");
+  }
 }

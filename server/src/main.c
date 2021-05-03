@@ -24,13 +24,13 @@ server_t server;
 int
 main( int argc, char *argv[] ) {
   srand( time( NULL ) );
-  if ( argc != 2 ) {
+  if ( argc != ARG_LEN ) {
     print_usage();
-  } else if ( streq( argv[1], "-s", ARG_LEN ) ) {
+  } else if ( str_eq( argv[1], "-s", ARG_LEN ) ) {
     server_init();
-  } else if ( streq( argv[1], "-l", ARG_LEN ) ) {
+  } else if ( str_eq( argv[1], "-l", ARG_LEN ) ) {
     linked_list_test();
-  } else if ( streq( argv[1], "-q", ARG_LEN ) ) {
+  } else if ( str_eq( argv[1], "-q", ARG_LEN ) ) {
   } else {
     print_usage();
   }
@@ -65,8 +65,8 @@ linked_list_test() {
     char buff[1024];
     while ( fgets(buff, sizeof buff, stdin ) != NULL ) {
       buff[strlen(buff) - 1] = '\0';
-      if ( streq( buff, "add", sizeof buff ) ) {
-      } else if ( streq( buff, "print", sizeof buff ) ) {
+      if ( str_eq( buff, "add", sizeof buff ) ) {
+      } else if ( str_eq( buff, "print", sizeof buff ) ) {
         struct client_node_s *cns = NULL;
         for ( cns = linked_list.head; cns != NULL; cns = cns->next ) {
           printf( "%s, %d\t", cns->client->name, cns->client->comm_id );
