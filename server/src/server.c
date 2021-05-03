@@ -36,8 +36,10 @@ server_init( void ) {
   }
 
   printf( "SERVER: Chat server starting...\n" );
-  clock_gettime(CLOCK_MONOTONIC_RAW, &server.start_time);
   server.flags = SERVER_ACTIVE;
+
+  memset( &server.start_time, 0, sizeof server.start_time );
+  clock_gettime(CLOCK_MONOTONIC_RAW, &server.start_time);
 
   // Initialize the different data structures.
   client_list_create( &server.client_list );

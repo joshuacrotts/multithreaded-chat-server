@@ -17,6 +17,7 @@ static void  client_parse_msg( struct client_s *client, char *msg_command );
 static void  client_leave( struct client_s *client );
 static void  client_login( struct client_s *client );
 static void  client_msg( struct task_s *task );
+static void  client_gettime( char *buffer, size_t buffer_size );
 
 static const struct text_attribute_s ERR_ATTR = { TEXT_ATTR_ITALIC, 0xff0000ff };   /* */
 static const struct text_attribute_s SEC_ATTR = { TEXT_ATTR_ITALIC, 0x0000007f };   /* */
@@ -116,6 +117,7 @@ static void *
 client_listen( void *c ) {
   struct client_s *client = ( struct client_s * ) c;
   pthread_detach( client->pid );
+
   char buff[1024];
   memset( buff, 0, sizeof buff );
   while ( client->flags & CLIENT_CONNECTED ) {
@@ -139,6 +141,11 @@ client_parse_command( struct client_s *client, char *cmd ) {
   // we don't want to tokenize the message.
   if ( ( client->flags & CLIENT_LOGGED_IN ) && cmd[0] != '/' ) {
     struct task_s *task = calloc( 1, sizeof( struct task_s ) );
+    if (task == NULL) {
+      fprintf( stderr, "Could not allocate memory for task struct.\n" );
+      exit( EXIT_FAILURE );
+    }
+
     task->task_type     = TASK_MSG;
     task->sender        = client;
     strcpy_n( task->receiver, "BROADCAST", sizeof task->data );
@@ -180,10 +187,9 @@ client_send_message( struct client_s *client, const struct text_attribute_s *att
                      const char *msg ) {
   if ( attr != NULL ) {
     fprintf( client->write_fp, "%d,%d,%s\n", attr->style_flag, attr->color, msg );
-    printf( "SERVER: %d,%d,%s\n", attr->style_flag, attr->color, msg );
   } else {
-    fprintf( client->write_fp, "%s\n", msg );
-    printf( "SERVER: %s\\n", msg );
+    fprintf( stderr, "Error - attr is NULL; this shouldn't be possible...\n" );
+    exit( EXIT_FAILURE );
   }
 }
 
@@ -192,7 +198,7 @@ client_send_message( struct client_s *client, const struct text_attribute_s *att
  */
 static void
 client_parse_login( struct client_s *client, char *login_command ) {
-  if ( str_isempty( login_command ) || str_count( login_command, " " ) ) {
+  if ( str_isempty( login_command ) || str_count( login_command, " " ) > 1 ) {
     client_send_message( client, &ERR_ATTR, "Error - usage: /login <name> <password>");
   } else {
     client_login( client );
@@ -208,14 +214,16 @@ client_login( struct client_s *client ) {
 
   // Display the current uptime of the server.
   struct timespec curr_time;
-  clock_gettime(CLOCK_MONOTONIC_RAW, &curr_time);
+  clock_gettime( CLOCK_MONOTONIC_RAW, &curr_time );
 
+  // Compute the current elapsed time from the start of the server to now.
   time_t now = curr_time.tv_sec - server.start_time.tv_sec;
-  struct tm * tm_now = localtime( &now );
+
+  // Convert the tm struct to a string.
   char buffer[256];
-  char time_buffer[128];
-  strftime( time_buffer, sizeof time_buffer, "%T", tm_now);
-  snprintf( buffer, sizeof buffer, "Logged in. Server uptime: %s", buffer );
+  snprintf( buffer, sizeof buffer, "Logged in. Server uptime: %ldh:%ldm:%lds", ( now / SEC_PER_HR ),
+                                                                               ( ( now / SEC_PER_MIN ) % SEC_PER_MIN ),
+                                                                               ( now % SEC_PER_MIN ) );
   client_send_message( client, &SEC_ATTR, buffer );
 }
 
@@ -240,6 +248,7 @@ client_leave( struct client_s *client ) {
     client->flags &= ~CLIENT_IN_ROOM;
   } else {
     client->flags &= ~CLIENT_CONNECTED;
+    client_send_message( client, &SEC_ATTR, "Disconnected." );
   }
 }
 
@@ -255,8 +264,11 @@ client_parse_msg( struct client_s *client, char *msg_command ) {
     client_send_message( client, &ERR_ATTR, "Error - usage /msg <usr> <msg>" );
   } else {
     struct task_s *task = calloc( 1, sizeof( struct task_s ) );
-    task->task_type     = TASK_MSG;
-    task->sender        = client;
+    if ( task == NULL ) {
+      fprintf( stderr, "Could not allocate memory for task struct.\n" );
+      exit( EXIT_FAILURE );
+    }
+
     strcpy_n( task->receiver, receiver, sizeof task->receiver );
     strcpy_n( task->data, msg, sizeof task->data );
     task_queue_enqueue( &server.task_queue, task );
@@ -269,14 +281,31 @@ client_parse_msg( struct client_s *client, char *msg_command ) {
 static void
 client_msg( struct task_s *msg_task ) {
   const bool BROADCAST = str_eq( msg_task->receiver, "BROADCAST", strlen( msg_task->receiver ) );
+  char buffer[2048];
+  char time_buffer[128];
   struct client_node_s *curr;
+
+  // Append the time and create the message to send.
+  client_gettime( time_buffer, sizeof time_buffer );
+  snprintf( buffer, sizeof buffer, "<%s - %s> %s", time_buffer, msg_task->sender->name, msg_task->data );
 
   // Iterate through the server to find the client we're looking for.
   for ( curr = server.client_list.head; curr != NULL; curr = curr->next ) {
     if ( BROADCAST ) {
-      client_send_message( curr->client, &curr->client->text_attributes, msg_task->data );
+      client_send_message( curr->client, &curr->client->text_attributes, buffer );
     } else if ( str_eq( msg_task->receiver, curr->client->name, strlen( msg_task->receiver ) ) ) {
-      client_send_message( curr->client, &SEC_ATTR, msg_task->data );
+      client_send_message( curr->client, &SEC_ATTR, buffer );
     }
   }
+}
+
+/**
+ *
+ */
+static void
+client_gettime( char *buffer, const size_t buffer_size ) {
+  time_t rawtime;
+  time( &rawtime );
+  struct tm *time_now = localtime( &rawtime );
+  strftime( buffer, buffer_size, "%F %T", time_now );
 }
