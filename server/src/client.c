@@ -212,8 +212,10 @@ client_login( struct client_s *client ) {
 
   time_t now = curr_time.tv_sec - server.start_time.tv_sec;
   struct tm * tm_now = localtime( &now );
-  char buffer[128];
-  snprintf( buffer, sizeof buffer, "Logged in. Server uptime: %s", asctime( tm_now ) );
+  char buffer[256];
+  char time_buffer[128];
+  strftime( time_buffer, sizeof time_buffer, "%T", tm_now);
+  snprintf( buffer, sizeof buffer, "Logged in. Server uptime: %s", buffer );
   client_send_message( client, &SEC_ATTR, buffer );
 }
 
