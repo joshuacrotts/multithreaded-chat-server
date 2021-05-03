@@ -19,12 +19,12 @@ public class ReadThread implements Runnable {
     /**
      *
      */
-    private final Thread THREAD;
+    private final ClientMessageField MESSAGE_FIELD;
 
     /**
      *
      */
-    private final ClientMessageField MESSAGE_FIELD;
+    private final Thread THREAD;
 
     /**
      *
@@ -46,12 +46,12 @@ public class ReadThread implements Runnable {
 
     @Override
     public void run() {
-        while (!this.CLIENT.getSocket().isClosed() && this.CLIENT.getSocket().isConnected()) {
+        while (!this.CLIENT.getSocket().isClosed()) {
             String line = "";
             try {
                 // Block while there's no data. Implicit block by BufferedReader.
-                while (!this.CLIENT.getSocket().isClosed() && (line = this.readfp.readLine()) != null) {
-                    this.MESSAGE_FIELD.appendString(line);
+                while ((line = this.readfp.readLine()) != null) {
+                    this.MESSAGE_FIELD.appendString(line + "\n");
                 }
             } catch (IOException ex) {
                 if (ex.getMessage().equals("Socket closed")) {

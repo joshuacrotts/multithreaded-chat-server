@@ -99,7 +99,8 @@ public class ClientMessageField {
         /**
          *
          */
-        private static final Pattern REGEX = Pattern.compile("(?<textFlag>-?\\d+),(?<color>-?\\d+),(?<msg>.*)", Pattern.MULTILINE);
+        private static final Pattern REGEX = Pattern.compile
+                ("(?<textFlag>-?\\d+),(?<color>-?\\d+),(?<msg>.*)", Pattern.MULTILINE);
 
         /**
          *

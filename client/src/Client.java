@@ -10,12 +10,12 @@ public class Client {
     /**
      * IP address of the server.
      */
-    private static final String IP = "143.198.113.42";
+    private static final String IP = "localhost";
 
     /**
      * Port for the server.
      */
-    private static final int PORT = 20158;
+    private static final int PORT = 8080;
 
     /**
      * JFrame UI for the client.

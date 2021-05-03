@@ -14,12 +14,12 @@ public class WriteThread implements Runnable {
     /**
      *
      */
-    private final Thread THREAD;
+    private final ClientInputField INPUT_FIELD;
 
     /**
      *
      */
-    private final ClientInputField INPUT_FIELD;
+    private final Thread THREAD;
 
     /**
      *
