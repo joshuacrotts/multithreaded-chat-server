@@ -74,6 +74,10 @@ public class ClientPane extends JPanel {
         super.add(this.INPUT_FIELD, BorderLayout.SOUTH);
     }
 
+    public ConnectedUsersPane getConnectedUsersPane() {
+        return this.CONNECTED_USERS_PANE;
+    }
+
     public ClientInputField getInputField() {
         return this.INPUT_FIELD;
     }
