@@ -8,10 +8,10 @@
 #include "utils.h"
 
 static void *client_listen( void * );
-static void  client_parse_command( const struct client_s *client, char *command );
-static void  client_send_message( const struct client_s *client, const struct text_attribute_s *attr, const char *msg );
-static void  client_parse_leave( const struct client_s *client, char *leave_command );
-static void  client_parse_login( const struct client_s *client, char *login_command );
+static void  client_parse_command( struct client_s *client, char *command );
+static void  client_send_message( struct client_s *client, const struct text_attribute_s *attr, const char *msg );
+static void  client_parse_leave( struct client_s *client, char *leave_command );
+static void  client_parse_login( struct client_s *client, char *login_command );
 
 extern server_t server;
 
@@ -106,7 +106,7 @@ client_listen( void *c ) {
  *
  */
 static void
-client_parse_command( const struct client_s *client, char *cmd ) {
+client_parse_command( struct client_s *client, char *cmd ) {
   // Tokenize the command.
   char * rest    = cmd;
   char * command = strtok_r( rest, " ", &rest );
@@ -129,7 +129,7 @@ client_parse_command( const struct client_s *client, char *cmd ) {
  *
  */
 static void
-client_send_message( const struct client_s *client, const struct text_attribute_s *attr,
+client_send_message( struct client_s *client, const struct text_attribute_s *attr,
                      const char *msg ) {
   if ( attr != NULL ) {
     fprintf( client->write_fp, "%d,%d\n\n%s\n", attr->style_flag, attr->color, msg );
@@ -144,13 +144,13 @@ client_send_message( const struct client_s *client, const struct text_attribute_
  *
  */
 static void
-client_parse_login( const struct client_s *client, char *login_command ) {}
+client_parse_login( struct client_s *client, char *login_command ) {}
 
 /**
  *
  */
 static void
-client_parse_leave( const struct client_s *client, char *leave_command ) {
+client_parse_leave( struct client_s *client, char *leave_command ) {
   printf("Leave command: %s\n", leave_command);
   if ( !str_isempty( leave_command ) ) {
     struct text_attribute_s t;
