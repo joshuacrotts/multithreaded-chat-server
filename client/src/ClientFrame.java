@@ -11,7 +11,7 @@ public class ClientFrame extends JFrame {
     /**
      *
      */
-    private final ClientPanel CLIENT_PANEL;
+    private final ClientPane CLIENT_PANEL;
 
     /**
      *
@@ -19,7 +19,7 @@ public class ClientFrame extends JFrame {
     private final Client CLIENT;
 
     public ClientFrame() {
-        this.CLIENT_PANEL = new ClientPanel();
+        this.CLIENT_PANEL = new ClientPane();
         this.CLIENT = new Client(this);
         this.addWindowCloseListener();
         super.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -49,7 +49,7 @@ public class ClientFrame extends JFrame {
         });
     }
 
-    public ClientPanel getClientPanel() {
+    public ClientPane getClientPanel() {
         return this.CLIENT_PANEL;
     }
 }
