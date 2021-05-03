@@ -6,7 +6,7 @@
 /**
  *
  */
-enum TASK_TYPE { TASK_NULL };
+enum TASK_TYPE { TASK_NULL, TASK_MSG };
 
 /**
  *

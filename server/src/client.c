@@ -8,10 +8,16 @@
 #include "utils.h"
 
 static void *client_listen( void * );
+static void  client_process_task( struct task_s *task );
 static void  client_parse_command( struct client_s *client, char *command );
 static void  client_send_message( struct client_s *client, const struct text_attribute_s *attr, const char *msg );
 static void  client_parse_leave( struct client_s *client, char *leave_command );
 static void  client_parse_login( struct client_s *client, char *login_command );
+static void  client_parse_msg( struct client_s *client, char *msg_command );
+
+static void client_leave( struct client_s *client );
+static void client_login( struct client_s *client );
+static void client_msg( struct task_s *task );
 
 extern server_t server;
 
@@ -107,6 +113,20 @@ client_listen( void *c ) {
 /**
  *
  */
+static void 
+client_process_task( struct task_s *task ) {
+  switch (task->task_type) {
+    case TASK_MSG:
+      client_msg( task );
+      break;
+    default:
+      fprintf( stderr, "Unrecognized task: %d.\n", task->task_type );
+  }
+}
+
+/**
+ *
+ */
 static void
 client_parse_command( struct client_s *client, char *cmd ) {
   // Tokenize the command.
@@ -114,16 +134,21 @@ client_parse_command( struct client_s *client, char *cmd ) {
   char * command = strtok_r( rest, " ", &rest );
   size_t len     = strlen( command );
 
-  // If there isn't a command or the client is NULL, just quit early.
-  if ( command == NULL || client == NULL ) {
-    return;
-  }
-
-  // Now parse each individual command.
-  if ( str_eq( command, "leave", len ) ) {
+  // If the command is empty, that means they want to send a message to
+  // everyone in the same room.
+  if ( command == NULL ) {
+    struct task_s *task = calloc( 1, sizeof( struct task_s ) );
+    task->task_type = TASK_MSG;
+    task->sender = client;
+    task->receiver = "BROADCAST";
+    task->data = rest;
+    task_queue_enqueue( &server.task_queue, task );
+  } else if ( str_eq( command, "/leave", len ) ) {
     client_parse_leave( client, rest );
-  } else if ( str_eq( command, "login", len ) ) {
+  } else if ( str_eq( command, "/login", len ) ) {
     client_parse_login( client, rest );
+  } else if ( str_eq( command, "/msg", len ) ) {
+    client_parse_msg( client, rest );
   }
 }
 
@@ -134,11 +159,11 @@ static void
 client_send_message( struct client_s *client, const struct text_attribute_s *attr,
                      const char *msg ) {
   if ( attr != NULL ) {
-    fprintf( client->write_fp, "%d,%d\n\n%s\n", attr->style_flag, attr->color, msg );
-    printf("SERVER: %d,%d\\n\\n%s\\n", attr->style_flag, attr->color, msg );
+    fprintf( client->write_fp, "%d,%d,%s", attr->style_flag, attr->color, msg );
+    printf("SERVER: %d,%d,%s\\n\n", attr->style_flag, attr->color, msg );
   } else {
-    fprintf( client->write_fp, "\n\n%s\n", msg );
-    printf("SERVER: \\n\\n%s\\n",  msg );
+    fprintf( client->write_fp, "%s", msg );
+    printf("SERVER: %s\\n\n",  msg );
   }
 }
 
@@ -152,16 +177,72 @@ client_parse_login( struct client_s *client, char *login_command ) {}
  *
  */
 static void
+client_login( struct client_s *client) {
+
+}
+
+/**
+ *
+ */
+static void
 client_parse_leave( struct client_s *client, char *leave_command ) {
-  printf("Leave command: %s\n", leave_command);
   if ( !str_isempty( leave_command ) ) {
-    struct text_attribute_s t;
-    t.style_flag = TEXT_ATTR_ITALIC;
-    t.color      = 0xff000000;
-    client_send_message( client, &t, "Error usage: <leave>");
-  } else if (client->flags & CLIENT_IN_ROOM) {
+    struct text_attribute_s t = {TEXT_ATTR_ITALIC, 0xff0000ff};
+    client_send_message( client, &t, "Error - usage: /leave");
+  } else {
+    client_leave( client );
+  }
+}
+
+/**
+ *
+ */
+static void
+client_leave( struct client_s *client ) {
+  if ( client->flags & CLIENT_IN_ROOM ) {
     client->flags &= ~CLIENT_IN_ROOM;
   } else {
     client->flags &= ~CLIENT_CONNECTED;
   }
 }
+
+/**
+ *
+ */
+static void 
+client_parse_msg( struct client_s *client, char *msg_command ) {
+  char *msg = NULL;
+  char *receiver = strtok_r( msg_command, " ", &msg );
+
+  if ( receiver == NULL || str_isempty( msg ) ) {
+    struct text_attribute_s t = {TEXT_ATTR_ITALIC, 0xff0000ff};
+    client_send_message( client, &t, "Error - usage /msg <usr> <msg>" );
+  } else {
+    struct task_s *task = calloc( 1, sizeof ( struct task_s ) );
+    task->task_type = TASK_MSG;
+    task->sender = client;
+    task->receiver = receiver;
+    task->data = msg;
+    task_queue_enqueue( &server.task_queue, task );
+  }
+}
+
+/**
+ *
+ */
+static void 
+client_msg( struct task_s *msg_task ) {
+  const bool BROADCAST = str_eq( msg_task->receiver, "BROADCAST", strlen( msg_task->receiver ) );
+  struct client_node_s *curr;
+
+  // Iterate through the server to find the client we're looking for.
+  for ( curr = server.client_list.head; curr != NULL; curr = curr->next ) {
+    if ( BROADCAST ) {
+      client_send_message( curr->client, &curr->client->text_attributes, msg_task->data );
+    } else if ( str_eq( msg_task->receiver, curr->client->name, strlen( msg_task->receiver ) ) ) {
+      struct text_attribute_s t = {TEXT_ATTR_ITALIC, 0x0000007f};
+      client_send_message( curr->client, &t, msg_task->data );
+    }
+  }
+}
+
