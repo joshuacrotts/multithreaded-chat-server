@@ -10,12 +10,12 @@
 
 static void *client_listen( void * );
 static void  client_parse_command( struct client_s *client, char *command );
-static void  client_send_message( struct client_s *client, const struct text_attribute_s *attr, const char *msg );
+static void  client_send_message( struct client_s *client, const enum MSG_TYPE msg_type, const struct text_attribute_s *attr, const char *msg );
 static void  client_parse_leave( struct client_s *client, char *leave_command );
 static void  client_parse_login( struct client_s *client, char *login_command );
 static void  client_parse_msg( struct client_s *client, char *msg_command );
 static void  client_leave( struct client_s *client );
-static void  client_login( struct client_s *client );
+static void  client_login( struct client_s *client, const char *user, const char *pswd );
 static void  client_msg( struct task_s *task );
 static void  client_gettime( char *buffer, size_t buffer_size );
 
@@ -40,7 +40,7 @@ client_create( const char *ip, int comm_id ) {
     exit( EXIT_FAILURE );
   }
 
-  client->name    = ( char * ) ip;
+  strcpy_n( client->name, ip, sizeof client->name );
   client->comm_id = comm_id;
   client->flags   = CLIENT_CONNECTED;
   client->text_attributes = OK_ATTR;
@@ -173,7 +173,7 @@ client_parse_command( struct client_s *client, char *cmd ) {
     if ( str_eq( command, "/login", len ) ) {
       client_parse_login( client, rest );
     } else {
-      client_send_message( client, &ERR_ATTR, "Error - no commands are allowed before logging in." );
+      client_send_message( client, MSG_CLIENT, &ERR_ATTR, "Error - no commands are allowed before logging in." );
     }
   }
 
@@ -183,10 +183,10 @@ client_parse_command( struct client_s *client, char *cmd ) {
  *
  */
 static void
-client_send_message( struct client_s *client, const struct text_attribute_s *attr,
+client_send_message( struct client_s *client, const enum MSG_TYPE msg_type, const struct text_attribute_s *attr,
                      const char *msg ) {
   if ( attr != NULL ) {
-    fprintf( client->write_fp, "%d,%d,%s\n", attr->style_flag, attr->color, msg );
+    fprintf( client->write_fp, "%d,%d,%d,%s\n", msg_type, attr->style_flag, attr->color, msg );
   } else {
     fprintf( stderr, "Error - attr is NULL; this shouldn't be possible...\n" );
     exit( EXIT_FAILURE );
@@ -198,10 +198,14 @@ client_send_message( struct client_s *client, const struct text_attribute_s *att
  */
 static void
 client_parse_login( struct client_s *client, char *login_command ) {
-  if ( str_isempty( login_command ) || str_count( login_command, " " ) > 1 ) {
-    client_send_message( client, &ERR_ATTR, "Error - usage: /login <name> <password>");
+  if ( client->flags & CLIENT_LOGGED_IN ) {
+    client_send_message( client, MSG_CLIENT, &ERR_ATTR, "Error - already logged in!" );
+  } else if ( str_isempty( login_command ) || str_count( login_command, " " ) != 1 ) {
+    client_send_message( client, MSG_CLIENT, &ERR_ATTR, "Error - usage: /login <name> <password>");
   } else {
-    client_login( client );
+    char *pswd = NULL;
+    char *user = strtok_r(login_command, " ", &pswd);
+    client_login( client, user, pswd );
   }
 }
 
@@ -209,8 +213,13 @@ client_parse_login( struct client_s *client, char *login_command ) {
  *
  */
 static void
-client_login( struct client_s *client ) {
+client_login( struct client_s *client, const char *user, const char *pswd ) {
   client->flags |= CLIENT_LOGGED_IN;
+
+  // Very temporary solution! The password should not be stored in the client
+  // struct at all.
+  strcpy_n( client->name, user, sizeof client->name );
+  strcpy_n( client->pswd, user, sizeof client->pswd );
 
   // Display the current uptime of the server.
   struct timespec curr_time;
@@ -224,7 +233,23 @@ client_login( struct client_s *client ) {
   snprintf( buffer, sizeof buffer, "Logged in. Server uptime: %ldh:%ldm:%lds", ( now / SEC_PER_HR ),
                                                                                ( ( now / SEC_PER_MIN ) % SEC_PER_MIN ),
                                                                                ( now % SEC_PER_MIN ) );
-  client_send_message( client, &SEC_ATTR, buffer );
+  client_send_message( client, MSG_CLIENT, &SEC_ATTR, buffer );
+
+  // Now send the broadcast message that this user connected.
+  struct task_s *broadcast_login_task = calloc( 1, sizeof( struct task_s ) );
+  if ( broadcast_login_task == NULL ) {
+      fprintf( stderr, "Could not allocate memory for task struct.\n" );
+      exit( EXIT_FAILURE );
+  }
+
+  // Copy the data over and enqueue the task.
+  char msg[128];
+  snprintf(msg, sizeof msg, "%s connected.", client->name );
+  broadcast_login_task->task_type = TASK_MSG;
+  broadcast_login_task->sender = client;
+  strcpy_n( broadcast_login_task->receiver, "BROADCAST", sizeof broadcast_login_task );
+  strcpy_n( broadcast_login_task->data, msg, sizeof broadcast_login_task->data );
+  task_queue_enqueue( &server.task_queue, broadcast_login_task );
 }
 
 /**
@@ -233,7 +258,7 @@ client_login( struct client_s *client ) {
 static void
 client_parse_leave( struct client_s *client, char *leave_command ) {
   if ( !str_isempty( leave_command ) ) {
-    client_send_message( client, &ERR_ATTR, "Error - usage: /leave" );
+    client_send_message( client, MSG_CLIENT, &ERR_ATTR, "Error - usage: /leave" );
   } else {
     client_leave( client );
   }
@@ -248,7 +273,10 @@ client_leave( struct client_s *client ) {
     client->flags &= ~CLIENT_IN_ROOM;
   } else {
     client->flags &= ~CLIENT_CONNECTED;
-    client_send_message( client, &SEC_ATTR, "Disconnected." );
+    char message[128];
+    snprintf( message, sizeof message, "%s disconnected.", client->name );
+    client_send_message( client, MSG_BROADCAST, &SEC_ATTR, message );
+
   }
 }
 
@@ -261,7 +289,7 @@ client_parse_msg( struct client_s *client, char *msg_command ) {
   char *receiver = strtok_r( msg_command, " ", &msg );
 
   if ( receiver == NULL || str_isempty( msg ) ) {
-    client_send_message( client, &ERR_ATTR, "Error - usage /msg <usr> <msg>" );
+    client_send_message( client, MSG_CLIENT, &ERR_ATTR, "Error - usage /msg <usr> <msg>" );
   } else {
     struct task_s *task = calloc( 1, sizeof( struct task_s ) );
     if ( task == NULL ) {
@@ -269,6 +297,8 @@ client_parse_msg( struct client_s *client, char *msg_command ) {
       exit( EXIT_FAILURE );
     }
 
+    task->sender = client;
+    task->task_type = TASK_MSG;
     strcpy_n( task->receiver, receiver, sizeof task->receiver );
     strcpy_n( task->data, msg, sizeof task->data );
     task_queue_enqueue( &server.task_queue, task );
@@ -292,9 +322,9 @@ client_msg( struct task_s *msg_task ) {
   // Iterate through the server to find the client we're looking for.
   for ( curr = server.client_list.head; curr != NULL; curr = curr->next ) {
     if ( BROADCAST ) {
-      client_send_message( curr->client, &curr->client->text_attributes, buffer );
+      client_send_message( curr->client, MSG_BROADCAST, &curr->client->text_attributes, buffer );
     } else if ( str_eq( msg_task->receiver, curr->client->name, strlen( msg_task->receiver ) ) ) {
-      client_send_message( curr->client, &SEC_ATTR, buffer );
+      client_send_message( curr->client, MSG_CLIENT, &SEC_ATTR, buffer );
     }
   }
 }

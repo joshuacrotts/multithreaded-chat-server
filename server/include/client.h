@@ -13,6 +13,11 @@
 #define TEXT_ATTR_ITALIC 0x00000001
 #define TEXT_ATTR_BOLD   0x00000002
 
+enum MSG_TYPE {
+    MSG_CLIENT,
+    MSG_BROADCAST
+};
+
 /**
  *
  */
@@ -33,7 +38,8 @@ struct cursor_s {
  *
  */
 struct client_s {
-  char *name;                                   /* */
+  char  name[32];                               /* */
+  char  pswd[32];                               /* */
   int   comm_id;                                /* */
   int   flags;                                  /* */
   int   row;                                    /* */
