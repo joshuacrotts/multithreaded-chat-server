@@ -17,8 +17,8 @@
  *
  */
 struct text_attribute_s {
-    int color;      /* */
     int style_flag; /* */
+    int color;      /* */
 };
 
 /**

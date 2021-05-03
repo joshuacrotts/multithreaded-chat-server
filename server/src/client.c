@@ -110,10 +110,9 @@ static void *
 client_listen( void *c ) {
   struct client_s *client = ( struct client_s * ) c;
   pthread_detach( client->pid );
+  char buff[1024];
+  memset( buff, 0, sizeof buff );
   while ( client->flags & CLIENT_CONNECTED ) {
-    char buff[1024];
-    memset( buff, 0, sizeof buff );
-    fflush( client->write_fp );
     if ( fgets( buff, sizeof buff, client->read_fp ) != NULL ) {
       buff[strcspn( buff, "\n" )] = 0;
       client_parse_command( client, buff );
@@ -129,21 +128,23 @@ client_listen( void *c ) {
  */
 static void
 client_parse_command( struct client_s *client, char *cmd ) {
+  // If the user isn't sending a command, they're sending a broadcast
+  // message to everyone in the room.
+  if ( cmd[0] != '/' ) {
+    struct task_s *task = calloc( 1, sizeof( struct task_s ) );
+    task->task_type     = TASK_MSG;
+    task->sender        = client;
+    strcpy( task->receiver, "BROADCAST" );
+    strcpy( task->data, cmd );
+    task_queue_enqueue( &server.task_queue, task );
+    return;
+  } 
+  
   // Tokenize the command.
   char * rest    = cmd;
   char * command = strtok_r( rest, " ", &rest );
   size_t len     = strlen( command );
-
-  // If the user isn't sending a command, they're sending a broadcast
-  // message to everyone in the room.
-  if ( cmd[0] == '/' ) {
-    struct task_s *task = calloc( 1, sizeof( struct task_s ) );
-    task->task_type     = TASK_MSG;
-    task->sender        = client;
-    task->receiver      = "BROADCAST";
-    task->data          = rest;
-    task_queue_enqueue( &server.task_queue, task );
-  } else if ( str_eq( command, "/leave", len ) ) {
+  if ( str_eq( command, "/leave", len ) ) {
     client_parse_leave( client, rest );
   } else if ( str_eq( command, "/login", len ) ) {
     client_parse_login( client, rest );
@@ -159,10 +160,10 @@ static void
 client_send_message( struct client_s *client, const struct text_attribute_s *attr,
                      const char *msg ) {
   if ( attr != NULL ) {
-    fprintf( client->write_fp, "%d,%d,%s", attr->style_flag, attr->color, msg );
+    fprintf( client->write_fp, "%d,%d,%s\n", attr->style_flag, attr->color, msg );
     printf( "SERVER: %d,%d,%s\\n\n", attr->style_flag, attr->color, msg );
   } else {
-    fprintf( client->write_fp, "%s", msg );
+    fprintf( client->write_fp, "%s\n", msg );
     printf( "SERVER: %s\\n\n", msg );
   }
 }
@@ -171,13 +172,17 @@ client_send_message( struct client_s *client, const struct text_attribute_s *att
  *
  */
 static void
-client_parse_login( struct client_s *client, char *login_command ) {}
+client_parse_login( struct client_s *client, char *login_command ) {
+  client_login( client );
+}
 
 /**
  *
  */
 static void
-client_login( struct client_s *client ) {}
+client_login( struct client_s *client ) {
+  printf("Login\n");
+}
 
 /**
  *
@@ -219,8 +224,8 @@ client_parse_msg( struct client_s *client, char *msg_command ) {
     struct task_s *task = calloc( 1, sizeof( struct task_s ) );
     task->task_type     = TASK_MSG;
     task->sender        = client;
-    task->receiver      = receiver;
-    task->data          = msg;
+    strcpy_n( task->receiver, receiver, sizeof task->receiver );
+    strcpy_n( task->data, msg, sizeof task->data );
     task_queue_enqueue( &server.task_queue, task );
   }
 }
