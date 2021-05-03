@@ -36,8 +36,10 @@ server_init( void ) {
   }
 
   printf( "SERVER: Chat server starting...\n" );
-
+  clock_gettime(CLOCK_MONOTONIC_RAW, &server.start_time);
   server.flags = SERVER_ACTIVE;
+
+  // Initialize the different data structures.
   client_list_create( &server.client_list );
   task_queue_create( &server.task_queue );
   server_thread_pool_init();
@@ -186,6 +188,11 @@ server_close( int signal ) {
   // Shuts the thread pool down by broadcasting a signal which causes the
   // threads to leave the loop since the server flag is turned off.
   server.flags &= ~SERVER_ACTIVE;
+  pthread_cond_broadcast( &server.task_queue.cond );
+  printf("SERVER: Waking up all threads in the pool...\n");
+  for ( int i = 0; i < NUM_THREADS; i++ ) {
+    pthread_join( server.thread_pool[i], NULL );
+  }
 
   // Free the clients that are still in the list. Note that if the server
   // is ended with an interrupt and there are still users in the list, it leaks.

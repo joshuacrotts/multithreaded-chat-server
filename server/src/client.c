@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "client.h"
@@ -9,15 +10,17 @@
 
 static void *client_listen( void * );
 static void  client_parse_command( struct client_s *client, char *command );
-static void  client_send_message( struct client_s *client, const struct text_attribute_s *attr,
-                                  const char *msg );
+static void  client_send_message( struct client_s *client, const struct text_attribute_s *attr, const char *msg );
 static void  client_parse_leave( struct client_s *client, char *leave_command );
 static void  client_parse_login( struct client_s *client, char *login_command );
 static void  client_parse_msg( struct client_s *client, char *msg_command );
+static void  client_leave( struct client_s *client );
+static void  client_login( struct client_s *client );
+static void  client_msg( struct task_s *task );
 
-static void client_leave( struct client_s *client );
-static void client_login( struct client_s *client );
-static void client_msg( struct task_s *task );
+static const struct text_attribute_s ERR_ATTR = { TEXT_ATTR_ITALIC, 0xff0000ff };   /* */
+static const struct text_attribute_s SEC_ATTR = { TEXT_ATTR_ITALIC, 0x0000007f };   /* */
+static const struct text_attribute_s OK_ATTR  = { 0, 0x000000ff };                  /* */
 
 extern server_t server;
 
@@ -39,7 +42,7 @@ client_create( const char *ip, int comm_id ) {
   client->name    = ( char * ) ip;
   client->comm_id = comm_id;
   client->flags   = CLIENT_CONNECTED;
-  client->text_attributes.color = 0x000000ff;
+  client->text_attributes = OK_ATTR;
 
   // Open the file pointers from the socket conn.
   // We need to verify that the ptrs are valid before continuing. If not, free.
@@ -49,6 +52,8 @@ client_create( const char *ip, int comm_id ) {
     fprintf( stderr, "Could not open client write file-pointer.\n" );
     exit( EXIT_FAILURE );
   }
+  // Disable buffering for the write fp.
+  setbuf( client->write_fp, NULL );
 
   if ( ( client->read_fp = fdopen( dup( client->comm_id ), "r" ) ) == NULL ) {
     close( client->comm_id );
@@ -97,7 +102,7 @@ client_destroy( struct client_s *client ) {
     fprintf( stderr, "Could not close client write file pointer.\n" );
   }
 
-  printf( "Freeing..\n" );
+  printf( "Freeing.\n" );
   free( client );
 }
 
@@ -130,28 +135,41 @@ client_listen( void *c ) {
 static void
 client_parse_command( struct client_s *client, char *cmd ) {
   // If the user isn't sending a command, they're sending a broadcast
-  // message to everyone in the room.
-  if ( cmd[0] != '/' ) {
+  // message to everyone in the room. This is checked first because
+  // we don't want to tokenize the message.
+  if ( ( client->flags & CLIENT_LOGGED_IN ) && cmd[0] != '/' ) {
     struct task_s *task = calloc( 1, sizeof( struct task_s ) );
     task->task_type     = TASK_MSG;
     task->sender        = client;
-    strcpy( task->receiver, "BROADCAST" );
-    strcpy( task->data, cmd );
+    strcpy_n( task->receiver, "BROADCAST", sizeof task->data );
+    strcpy_n( task->data, cmd, sizeof task->data );
     task_queue_enqueue( &server.task_queue, task );
     return;
-  } 
+  }
   
   // Tokenize the command.
   char * rest    = cmd;
   char * command = strtok_r( rest, " ", &rest );
   size_t len     = strlen( command );
-  if ( str_eq( command, "/leave", len ) ) {
-    client_parse_leave( client, rest );
-  } else if ( str_eq( command, "/login", len ) ) {
-    client_parse_login( client, rest );
-  } else if ( str_eq( command, "/msg", len ) ) {
-    client_parse_msg( client, rest );
+
+  // The user must be logged in to use any commands (except /login).
+  if ( client->flags & CLIENT_LOGGED_IN ) {
+    if ( str_eq( command, "/leave", len ) ) {
+      client_parse_leave( client, rest );
+    } else if ( str_eq( command, "/msg", len ) ) {
+      client_parse_msg( client, rest );
+    } else if ( str_eq( command, "/login", len) ) {
+      client_parse_login( client, rest );
+    }
+  } else {
+    // Otherwise, if they are logging in, let them.
+    if ( str_eq( command, "/login", len ) ) {
+      client_parse_login( client, rest );
+    } else {
+      client_send_message( client, &ERR_ATTR, "Error - no commands are allowed before logging in." );
+    }
   }
+
 }
 
 /**
@@ -162,10 +180,10 @@ client_send_message( struct client_s *client, const struct text_attribute_s *att
                      const char *msg ) {
   if ( attr != NULL ) {
     fprintf( client->write_fp, "%d,%d,%s\n", attr->style_flag, attr->color, msg );
-    printf( "SERVER: %d,%d,%s\\n\n", attr->style_flag, attr->color, msg );
+    printf( "SERVER: %d,%d,%s\n", attr->style_flag, attr->color, msg );
   } else {
     fprintf( client->write_fp, "%s\n", msg );
-    printf( "SERVER: %s\\n\n", msg );
+    printf( "SERVER: %s\\n", msg );
   }
 }
 
@@ -174,7 +192,11 @@ client_send_message( struct client_s *client, const struct text_attribute_s *att
  */
 static void
 client_parse_login( struct client_s *client, char *login_command ) {
-  client_login( client );
+  if ( str_isempty( login_command ) || str_count( login_command, " " ) ) {
+    client_send_message( client, &ERR_ATTR, "Error - usage: /login <name> <password>");
+  } else {
+    client_login( client );
+  }
 }
 
 /**
@@ -182,7 +204,17 @@ client_parse_login( struct client_s *client, char *login_command ) {
  */
 static void
 client_login( struct client_s *client ) {
-  printf("Login\n");
+  client->flags |= CLIENT_LOGGED_IN;
+
+  // Display the current uptime of the server.
+  struct timespec curr_time;
+  clock_gettime(CLOCK_MONOTONIC_RAW, &curr_time);
+
+  time_t now = curr_time.tv_sec - server.start_time.tv_sec;
+  struct tm * tm_now = localtime( &now );
+  char buffer[128];
+  snprintf( buffer, sizeof buffer, "Logged in. Server uptime: %s", asctime( tm_now ) );
+  client_send_message( client, &SEC_ATTR, buffer );
 }
 
 /**
@@ -191,8 +223,7 @@ client_login( struct client_s *client ) {
 static void
 client_parse_leave( struct client_s *client, char *leave_command ) {
   if ( !str_isempty( leave_command ) ) {
-    struct text_attribute_s t = { TEXT_ATTR_ITALIC, 0xff0000ff };
-    client_send_message( client, &t, "Error - usage: /leave" );
+    client_send_message( client, &ERR_ATTR, "Error - usage: /leave" );
   } else {
     client_leave( client );
   }
@@ -219,8 +250,7 @@ client_parse_msg( struct client_s *client, char *msg_command ) {
   char *receiver = strtok_r( msg_command, " ", &msg );
 
   if ( receiver == NULL || str_isempty( msg ) ) {
-    struct text_attribute_s t = { TEXT_ATTR_ITALIC, 0xff0000ff };
-    client_send_message( client, &t, "Error - usage /msg <usr> <msg>" );
+    client_send_message( client, &ERR_ATTR, "Error - usage /msg <usr> <msg>" );
   } else {
     struct task_s *task = calloc( 1, sizeof( struct task_s ) );
     task->task_type     = TASK_MSG;
@@ -244,8 +274,7 @@ client_msg( struct task_s *msg_task ) {
     if ( BROADCAST ) {
       client_send_message( curr->client, &curr->client->text_attributes, msg_task->data );
     } else if ( str_eq( msg_task->receiver, curr->client->name, strlen( msg_task->receiver ) ) ) {
-      struct text_attribute_s t = { TEXT_ATTR_ITALIC, 0x0000007f };
-      client_send_message( curr->client, &t, msg_task->data );
+      client_send_message( curr->client, &SEC_ATTR, msg_task->data );
     }
   }
 }

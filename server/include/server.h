@@ -1,10 +1,12 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <time.h>
+
 #include "client_list.h"
 #include "task_queue.h"
 
-#define NUM_THREADS 8
+#define NUM_THREADS 32
 
 #define SERVER_ACTIVE 0x00000001
 
@@ -12,11 +14,12 @@
  *
  */
 typedef struct server_t {
-  pthread_t     thread_pool[NUM_THREADS]; /* */
-  task_queue_t  task_queue;               /* */
-  client_list_t client_list;              /* */
-  int           socket_fd;                /* */
-  int           flags;                    /* */
+  pthread_t         thread_pool[NUM_THREADS]; /* */
+  task_queue_t      task_queue;               /* */
+  client_list_t     client_list;              /* */
+  int               socket_fd;                /* */
+  int               flags;                    /* */
+  struct timespec   start_time;        /* */
 } server_t;
 
 extern server_t server;
