@@ -3,11 +3,12 @@
 
 #include <pthread.h>
 
+#include "utils.h"
+
 /**
  *
  */
 enum TASK_TYPE { TASK_NULL, TASK_MSG };
-
 /**
  *
  */
@@ -31,6 +32,7 @@ struct task_queue_node_s {
  */
 struct task_s {
   enum TASK_TYPE   task_type; /* */
+  enum MSG_TYPE    msg_type;  /* */
   struct client_s *sender;    /* */
 
   char receiver[1024]; /* */

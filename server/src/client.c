@@ -66,6 +66,8 @@ client_create( const char *ip, int comm_id ) {
 
   // Now, add it to our linked list.
   client_list_add( &server.client_list, client );
+
+  // Lastly, create the dedicated thread.
   pthread_create( &client->pid, NULL, client_listen, ( void * ) client );
 }
 
@@ -147,6 +149,7 @@ client_parse_command( struct client_s *client, char *cmd ) {
     }
 
     task->task_type     = TASK_MSG;
+    task->msg_type      = MSG_BROADCAST;
     task->sender        = client;
     strcpy_n( task->receiver, "BROADCAST", sizeof task->data );
     strcpy_n( task->data, cmd, sizeof task->data );
@@ -246,6 +249,7 @@ client_login( struct client_s *client, const char *user, const char *pswd ) {
   char msg[128];
   snprintf(msg, sizeof msg, "%s connected.", client->name );
   broadcast_login_task->task_type = TASK_MSG;
+  broadcast_login_task->msg_type = MSG_CLIENT_CONN;
   broadcast_login_task->sender = client;
   strcpy_n( broadcast_login_task->receiver, "BROADCAST", sizeof broadcast_login_task );
   strcpy_n( broadcast_login_task->data, msg, sizeof broadcast_login_task->data );
@@ -275,8 +279,18 @@ client_leave( struct client_s *client ) {
     client->flags &= ~CLIENT_CONNECTED;
     char message[128];
     snprintf( message, sizeof message, "%s disconnected.", client->name );
-    client_send_message( client, MSG_BROADCAST, &SEC_ATTR, message );
+    struct task_s *task = calloc(1, sizeof( struct task_s ) );
+    if ( task == NULL ) {
+      fprintf( stderr, "Could not allocate memory for task struct.\n" );
+      exit( EXIT_FAILURE );
+    }
 
+    task->task_type = TASK_MSG;
+    task->msg_type = MSG_CLIENT_DISCONN;
+    task->sender = client;
+    strcpy_n( task->receiver, "BROADCAST", sizeof task->receiver );
+    strcpy_n( task->data, message, sizeof task->data  );
+    task_queue_enqueue( &server.task_queue, task );
   }
 }
 
@@ -299,6 +313,7 @@ client_parse_msg( struct client_s *client, char *msg_command ) {
 
     task->sender = client;
     task->task_type = TASK_MSG;
+    task->msg_type = MSG_CLIENT;
     strcpy_n( task->receiver, receiver, sizeof task->receiver );
     strcpy_n( task->data, msg, sizeof task->data );
     task_queue_enqueue( &server.task_queue, task );
@@ -322,7 +337,7 @@ client_msg( struct task_s *msg_task ) {
   // Iterate through the server to find the client we're looking for.
   for ( curr = server.client_list.head; curr != NULL; curr = curr->next ) {
     if ( BROADCAST ) {
-      client_send_message( curr->client, MSG_BROADCAST, &curr->client->text_attributes, buffer );
+      client_send_message( curr->client, msg_task->msg_type, &curr->client->text_attributes, buffer );
     } else if ( str_eq( msg_task->receiver, curr->client->name, strlen( msg_task->receiver ) ) ) {
       client_send_message( curr->client, MSG_CLIENT, &SEC_ATTR, buffer );
     }

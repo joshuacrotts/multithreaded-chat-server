@@ -7,6 +7,14 @@
 #define SEC_PER_HR  3600
 #define SEC_PER_MIN 60
 
+enum MSG_TYPE {
+    MSG_INIT_CONN,
+    MSG_CLIENT_CONN,
+    MSG_CLIENT_DISCONN,
+    MSG_CLIENT,
+    MSG_BROADCAST
+};
+
 extern bool str_isempty( const char *str );
 extern bool str_eq( const char *s1, const char *s2 , size_t n );
 extern int  str_count( const char *str, const char *search );

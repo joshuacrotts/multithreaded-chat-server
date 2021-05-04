@@ -5,6 +5,7 @@
 #include <pthread.h>
 
 #include "task_queue.h"
+#include "utils.h"
 
 #define CLIENT_CONNECTED 0x00000001
 #define CLIENT_LOGGED_IN 0x00000002
@@ -12,11 +13,6 @@
 
 #define TEXT_ATTR_ITALIC 0x00000001
 #define TEXT_ATTR_BOLD   0x00000002
-
-enum MSG_TYPE {
-    MSG_CLIENT,
-    MSG_BROADCAST
-};
 
 /**
  *
