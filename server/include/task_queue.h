@@ -8,7 +8,8 @@
 /**
  *
  */
-enum TASK_TYPE { TASK_NULL, TASK_MSG };
+enum TASK_TYPE { TASK_NULL, TASK_MSG, TASK_SEND_CLIENTS, TASK_SEND_ROOMS, TASK_SEND_FRIENDS };
+
 /**
  *
  */
@@ -39,6 +40,9 @@ struct task_s {
   char data[1024];     /* */
 };
 
+extern void           task_queue_createtask( struct client_s *sender, const char *receiver,
+                                             const enum TASK_TYPE task_type, const enum MSG_TYPE msg_type,
+                                             const char *data );
 extern void           task_queue_create( task_queue_t *queue );
 extern void           task_queue_destroy( task_queue_t *queue );
 extern void           task_queue_enqueue( task_queue_t *queue, struct task_s *task );

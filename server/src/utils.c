@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "string.h"
 #include "utils.h"
@@ -76,4 +77,72 @@ str_count( const char *str, const char *search ) {
   }
 
   return count;
+}
+
+/**
+ *
+ * <p>
+ *
+ * </p>
+ *
+ * @param
+ *
+ * @return
+ */
+void *
+s_malloc( size_t size ) {
+  void *ptr = malloc( size );
+
+  if ( !ptr && size > 0 ) {
+    perror( "Could not allocate memory in s_malloc function.\n" );
+    exit( EXIT_FAILURE );
+  }
+
+  return ptr;
+}
+
+/**
+ *
+ * <p>
+ *
+ * </p>
+ *
+ * @param
+ * @param
+ *
+ * @return
+ */
+void *
+s_calloc( size_t n, size_t size ) {
+  void *ptr = calloc( n, size );
+
+  if ( !ptr && size > 0 && n > 0 ) {
+    perror( "Could not allocate memory in s_calloc function.\n" );
+    exit( EXIT_FAILURE );
+  }
+
+  return ptr;
+}
+
+/**
+ *
+ * <p>
+ *
+ * </p>
+ *
+ * @param
+ * @param
+ *
+ * @return
+ */
+void *
+s_realloc( void *data, size_t size ) {
+  void *ptr = realloc( data, size );
+
+  if ( !ptr && size > 0 ) {
+    perror( "Could not allocate memory in s_realloc function.\n" );
+    exit( EXIT_FAILURE );
+  }
+
+  return ptr;
 }

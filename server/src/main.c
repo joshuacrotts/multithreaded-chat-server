@@ -46,7 +46,7 @@ main( int argc, char *argv[] ) {
  */
 static void
 print_usage( void ) {
-  fprintf( stderr, "Usage: ./main [-s | -l | -q]\n"
+  perror( "Usage: ./main [-s | -l | -q]\n"
                    "-s\tRun server\n"
                    "-l\tTest linked list structure\n"
                    "-q\tTest queue structure\n" );

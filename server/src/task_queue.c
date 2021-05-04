@@ -6,6 +6,33 @@
 #include "task_queue.h"
 
 /**
+ * 
+ * <p>
+ * 
+ * </p>
+ * 
+ * @param
+ * @param
+ * @param
+ * @param
+ * @param
+ * 
+ * @return
+ */
+void
+task_queue_createtask( struct client_s *client, const char *receiver,
+                       const enum TASK_TYPE task_type, const enum MSG_TYPE msg_type,
+                       const char *data ) {
+  struct task_s *task = s_calloc( 1, sizeof ( struct task_s ) );
+  task->sender = client;
+  task->task_type = task_type;
+  task->msg_type = msg_type;
+  strcpy_n( task->receiver, receiver, sizeof task->receiver );
+  strcpy_n( task->data, data, sizeof task->data );
+  task_queue_enqueue( &server.task_queue, task );
+}
+
+/**
  * Initializes a queue (it starts empty).
  *
  * @param task_queue_t * pointer to queue object to initialize.
@@ -34,12 +61,7 @@ task_queue_create( task_queue_t *q ) {
 void
 task_queue_enqueue( task_queue_t *q, struct task_s *task ) {
   // Initialize the node for the list and store the task in it.
-  struct task_queue_node_s *node = calloc( 1, sizeof( struct task_queue_node_s ) );
-  if ( node == NULL ) {
-    printf( "SERVER: Could not allocate memory for node in task queue.\n" );
-    exit( EXIT_FAILURE );
-  }
-
+  struct task_queue_node_s *node = s_calloc( 1, sizeof( struct task_queue_node_s ) );
   node->task = task;
   node->next = NULL;
 

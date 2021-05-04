@@ -25,7 +25,7 @@ struct client_node_s {
 
 extern void client_list_create( client_list_t *client_list );
 extern void client_list_destroy( client_list_t *client_list );
-extern int  client_list_add( client_list_t *client_list, struct client_s *client );
+extern void client_list_add( client_list_t *client_list, struct client_s *client );
 extern int  client_list_remove( client_list_t *client_list, struct client_s *client );
 extern int  client_list_search( client_list_t *client_list, struct client_s *client );
 

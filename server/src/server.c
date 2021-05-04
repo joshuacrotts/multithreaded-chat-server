@@ -10,9 +10,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "task_queue.h"
 #include "client.h"
 #include "server.h"
+#include "task_queue.h"
 #include "tcpdefs.h"
 
 #define DEBUG 1
@@ -31,7 +31,7 @@ void
 server_init( void ) {
   server.socket_fd = server_create_listener( SERVER_PORT );
   if ( server.socket_fd < 0 ) {
-    fprintf( stderr, "DEBUG: Could not initialize socket file descriptor.\n" );
+    perror( "DEBUG: Could not initialize socket file descriptor.\n" );
     exit( EXIT_FAILURE );
   }
 
@@ -39,7 +39,7 @@ server_init( void ) {
   server.flags = SERVER_ACTIVE;
 
   memset( &server.start_time, 0, sizeof server.start_time );
-  clock_gettime(CLOCK_MONOTONIC_RAW, &server.start_time);
+  clock_gettime( CLOCK_MONOTONIC_RAW, &server.start_time );
 
   // Initialize the different data structures.
   client_list_create( &server.client_list );
@@ -61,7 +61,7 @@ static int
 server_create_listener( char *service ) {
   int socket_fd;
   if ( ( socket_fd = socket( AF_INET, SOCK_STREAM, 0 ) ) < 0 ) {
-    fprintf( stderr, "DEBUG: Could not create socket listener.\n" );
+    perror( "DEBUG: Could not create socket listener.\n" );
     return -1;
   }
 
@@ -88,7 +88,7 @@ server_create_listener( char *service ) {
   // Binds the name and address to the socket.
   int bind_return_val = bind( socket_fd, result->ai_addr, result->ai_addrlen );
   if ( bind_return_val < 0 ) {
-    fprintf( stderr, "DEBUG: Could not bind name and address to socket.\n" );
+    perror( "DEBUG: Could not bind name and address to socket.\n" );
     close( socket_fd );
     return -1;
   }
@@ -96,7 +96,7 @@ server_create_listener( char *service ) {
   // Lastly, set up the listener.
   int listen_return_val = listen( socket_fd, 128 );
   if ( listen_return_val < 0 ) {
-    fprintf( stderr, "DEBUG: Could not initialize socket listener.\n" );
+    perror( "DEBUG: Could not initialize socket listener.\n" );
     close( socket_fd );
     return -1;
   }
@@ -191,7 +191,7 @@ server_close( int signal ) {
   // threads to leave the loop since the server flag is turned off.
   server.flags &= ~SERVER_ACTIVE;
   pthread_cond_broadcast( &server.task_queue.cond );
-  printf("SERVER: Waking up all threads in the pool...\n");
+  printf( "SERVER: Waking up all threads in the pool...\n" );
   for ( int i = 0; i < NUM_THREADS; i++ ) {
     pthread_join( server.thread_pool[i], NULL );
   }

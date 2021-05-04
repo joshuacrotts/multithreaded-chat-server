@@ -1,6 +1,6 @@
-#include "client_list.h"
-
 #include <stdlib.h>
+
+#include "client_list.h"
 
 /**
  *
@@ -11,7 +11,7 @@
 void
 client_list_create( client_list_t *client_list ) {
   if ( pthread_mutex_init( &client_list->mutex, NULL ) < 0 ) {
-    fprintf( stderr, "Could not initialize the mutex for client list.\n" );
+    perror( "Could not initialize the mutex for client list.\n" );
     exit( EXIT_FAILURE );
   }
 
@@ -26,15 +26,9 @@ client_list_create( client_list_t *client_list ) {
  *
  * @return
  */
-int
+void
 client_list_add( client_list_t *client_list, struct client_s *client ) {
-
-  struct client_node_s *client_node = calloc( 1, sizeof( struct client_node_s ) );
-  if ( client_node == NULL ) {
-    fprintf( stderr, "Could not allocate memory for client node struct!\n" );
-    return -1;
-  }
-
+  struct client_node_s *client_node = s_calloc( 1, sizeof( struct client_node_s ) );
   client_node->client = client;
   client_node->next   = NULL;
   client_node->prev   = NULL;
@@ -50,7 +44,6 @@ client_list_add( client_list_t *client_list, struct client_s *client ) {
   }
 
   pthread_mutex_unlock( &client_list->mutex );
-  return 0;
 }
 
 /**
@@ -89,13 +82,12 @@ client_list_remove( client_list_t *client_list, struct client_s *client ) {
       // Destroy the client AND the backing LL node.
       client_destroy( curr->client );
       free( curr );
-      pthread_mutex_unlock( &client_list->mutex );
-      return i;
+      break;
     }
   }
 
   pthread_mutex_unlock( &client_list->mutex );
-  return -1;
+  return curr != NULL ? i : -1;
 }
 
 /**

@@ -1,8 +1,8 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include <stdio.h>
 #include <pthread.h>
+#include <stdio.h>
 
 #include "task_queue.h"
 #include "utils.h"
@@ -14,12 +14,15 @@
 #define TEXT_ATTR_ITALIC 0x00000001
 #define TEXT_ATTR_BOLD   0x00000002
 
+#define CLIENT_NAME_SIZE 32
+#define CLIENT_PSWD_SIZE 32
+
 /**
  *
  */
 struct text_attribute_s {
-    int style_flag; /* */
-    int color;      /* */
+  int style_flag; /* */
+  int color;      /* */
 };
 
 /**
@@ -34,19 +37,19 @@ struct cursor_s {
  *
  */
 struct client_s {
-  char  name[32];                               /* */
-  char  pswd[32];                               /* */
-  int   comm_id;                                /* */
-  int   flags;                                  /* */
-  int   row;                                    /* */
-  int   col;                                    /* */
+  char name[CLIENT_NAME_SIZE]; /* */
+  char pswd[CLIENT_PSWD_SIZE]; /* */
+  int  comm_id;  /* */
+  int  flags;    /* */
+  int  row;      /* */
+  int  col;      /* */
 
-  FILE *    read_fp;                            /* */
-  FILE *    write_fp;                           /* */
-  pthread_t pid;                                /* */
+  FILE *    read_fp;  /* */
+  FILE *    write_fp; /* */
+  pthread_t pid;      /* */
 
-  struct text_attribute_s   text_attributes;    /* */
-  struct client_s           *friends;           /* */
+  struct text_attribute_s text_attributes; /* */
+  struct client_s *       friends;         /* */
 };
 
 extern void client_create( const char *ip, int comm_id );
