@@ -18,14 +18,14 @@ public class ClientFriendListPane extends JPanel {
     /**
      *
      */
-    private final Label TITLE_LABEL;
+    private final JLabel TITLE_LABEL;
 
     public ClientFriendListPane() {
         this.CONNECTED_USERS_SCROLL_PANE = new JScrollPane();
         this.CONNECTED_USERS_SCROLL_PANE.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         this.CONNECTED_USERS_SCROLL_PANE.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        this.TITLE_LABEL = new Label(PANE_TITLE);
-        this.TITLE_LABEL.setAlignment(Label.CENTER);
+        this.TITLE_LABEL = new JLabel(PANE_TITLE);
+        this.TITLE_LABEL.setHorizontalAlignment(JLabel.CENTER);
 
         super.setLayout(new BorderLayout());
         super.setOpaque(true);

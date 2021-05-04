@@ -36,10 +36,10 @@ public class ClientMessageField {
     /**
      * @param s
      */
-    public void appendString(String s) {
+    public void appendString(String s, int textFlag, int colorFlag) {
         try {
             StyledDocument doc = this.MESSAGE_FIELD.getStyledDocument();
-            ClientTextAttributes attributes = new ClientTextAttributes(s, this.MESSAGE_FIELD);
+            ClientTextAttributes attributes = new ClientTextAttributes(s, textFlag, colorFlag, this.MESSAGE_FIELD);
             doc.insertString(doc.getLength(), attributes.MESSAGE + "\n", attributes.STYLE);
         } catch (BadLocationException exc) {
             exc.printStackTrace();
@@ -99,12 +99,6 @@ public class ClientMessageField {
         /**
          *
          */
-        private static final Pattern REGEX = Pattern.compile
-                ("(?<msgType>-?\\d+),(?<textFlag>-?\\d+),(?<color>-?\\d+),(?<msg>.*)", Pattern.MULTILINE);
-
-        /**
-         *
-         */
         private final Style STYLE;
 
         /**
@@ -112,31 +106,17 @@ public class ClientMessageField {
          */
         private final String MESSAGE;
 
-        public ClientTextAttributes(String rawString, JTextPane messageField) {
-            Matcher data = REGEX.matcher(rawString);
+        public ClientTextAttributes(String str, int textFlag, int colorFlag, JTextPane messageField) {
             this.STYLE = messageField.addStyle("", null);
-            int msgType = 0;
-            int textFlag = 0;
-            int colorFlag = 0;
-
-            // If we have more than one arg, then we know there's a color and style element set.
-            if (data.find()) {
-                msgType = Integer.parseInt(data.group("msgType"));
-                textFlag = Integer.parseInt(data.group("textFlag"));
-                colorFlag = Integer.parseInt(data.group("color"));
-                this.MESSAGE = data.group("msg");
-
-                if ((textFlag & ITALIC_FLAG) != 0) {
-                    StyleConstants.setItalic(this.STYLE, true);
-                }
-                if ((textFlag & BOLD_FLAG) != 0) {
-                    StyleConstants.setBold(this.STYLE, true);
-                }
-
-                StyleConstants.setForeground(this.STYLE, this.extractColor(colorFlag));
-            } else {
-                this.MESSAGE = rawString;
+            if ((textFlag & ITALIC_FLAG) != 0) {
+                StyleConstants.setItalic(this.STYLE, true);
             }
+            if ((textFlag & BOLD_FLAG) != 0) {
+                StyleConstants.setBold(this.STYLE, true);
+            }
+
+            StyleConstants.setForeground(this.STYLE, this.extractColor(colorFlag));
+            this.MESSAGE = str;
         }
 
         private Color extractColor(int color) {

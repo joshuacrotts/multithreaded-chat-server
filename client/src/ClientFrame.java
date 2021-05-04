@@ -11,7 +11,7 @@ public class ClientFrame extends JFrame {
     /**
      *
      */
-    private final ClientPane CLIENT_PANEL;
+    private final ClientPane CLIENT_PANE;
 
     /**
      *
@@ -19,7 +19,7 @@ public class ClientFrame extends JFrame {
     private final Client CLIENT;
 
     public ClientFrame() {
-        this.CLIENT_PANEL = new ClientPane();
+        this.CLIENT_PANE = new ClientPane(this);
         this.CLIENT = new Client(this);
         this.addWindowCloseListener();
         super.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -27,7 +27,7 @@ public class ClientFrame extends JFrame {
         super.setVisible(true);
         super.setMinimumSize(new Dimension(640, 480));
         super.setLocationRelativeTo(null);
-        super.add(this.CLIENT_PANEL);
+        super.add(this.CLIENT_PANE);
         super.pack();
     }
 
@@ -49,7 +49,7 @@ public class ClientFrame extends JFrame {
         });
     }
 
-    public ClientPane getClientPanel() {
-        return this.CLIENT_PANEL;
+    public ClientPane getClientPane() {
+        return this.CLIENT_PANE;
     }
 }

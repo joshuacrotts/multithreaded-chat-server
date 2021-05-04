@@ -26,9 +26,9 @@ public class WriteThread implements Runnable {
      */
     private PrintWriter writefp;
 
-    public WriteThread(Client client, ClientInputField inputField) {
+    public WriteThread(Client client, ClientPane clientPane) {
         this.CLIENT = client;
-        this.INPUT_FIELD = inputField;
+        this.INPUT_FIELD = clientPane.getInputField();
 
         // Create the stdin and writer file pointers.
         // The write fp corresponds to the read on the server.

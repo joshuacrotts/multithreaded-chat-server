@@ -55,8 +55,8 @@ public class Client {
         }
 
         this.FRAME = frame;
-        this.READ_THREAD = new ReadThread(this, this.FRAME.getClientPanel().getMessageField());
-        this.WRITE_THREAD = new WriteThread(this, this.FRAME.getClientPanel().getInputField());
+        this.READ_THREAD = new ReadThread(this, this.FRAME.getClientPane());
+        this.WRITE_THREAD = new WriteThread(this, this.FRAME.getClientPane());
         this.COMMAND_PARSER = new CommandParser(this);
     }
 

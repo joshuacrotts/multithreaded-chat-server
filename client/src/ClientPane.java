@@ -31,8 +31,8 @@ public class ClientPane extends JPanel {
      */
     private final ClientMessageField MESSAGE_FIELD;
 
-    public ClientPane() {
-        this.INPUT_FIELD = new ClientInputField();
+    public ClientPane(ClientFrame frame) {
+        this.INPUT_FIELD = new ClientInputField(frame);
         this.MESSAGE_FIELD = new ClientMessageField();
         this.CLIENT_FRIEND_LIST_PANE = new ClientFriendListPane();
         this.CLIENT_ROOM_LIST_PANE = new ClientRoomListPane();
@@ -76,6 +76,14 @@ public class ClientPane extends JPanel {
 
     public ConnectedUsersPane getConnectedUsersPane() {
         return this.CONNECTED_USERS_PANE;
+    }
+
+    public ClientFriendListPane getFriendListPane() {
+        return this.CLIENT_FRIEND_LIST_PANE;
+    }
+
+    public ClientRoomListPane getRoomListPane() {
+        return this.CLIENT_ROOM_LIST_PANE;
     }
 
     public ClientInputField getInputField() {
