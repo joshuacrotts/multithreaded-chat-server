@@ -100,7 +100,7 @@ public class ClientMessageField {
          *
          */
         private static final Pattern REGEX = Pattern.compile
-                ("(?<textFlag>-?\\d+),(?<color>-?\\d+),(?<msg>.*)", Pattern.MULTILINE);
+                ("(?<msgType>-?\\d+),(?<textFlag>-?\\d+),(?<color>-?\\d+),(?<msg>.*)", Pattern.MULTILINE);
 
         /**
          *
@@ -115,11 +115,13 @@ public class ClientMessageField {
         public ClientTextAttributes(String rawString, JTextPane messageField) {
             Matcher data = REGEX.matcher(rawString);
             this.STYLE = messageField.addStyle("", null);
+            int msgType = 0;
             int textFlag = 0;
             int colorFlag = 0;
 
             // If we have more than one arg, then we know there's a color and style element set.
             if (data.find()) {
+                msgType = Integer.parseInt(data.group("msgType"));
                 textFlag = Integer.parseInt(data.group("textFlag"));
                 colorFlag = Integer.parseInt(data.group("color"));
                 this.MESSAGE = data.group("msg");
