@@ -1,3 +1,6 @@
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -19,6 +22,11 @@ public class ClientFrame extends JFrame {
     private final Client CLIENT;
 
     public ClientFrame() {
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        }
         this.CLIENT_PANE = new ClientPane(this);
         this.CLIENT = new Client(this);
         this.addWindowCloseListener();
